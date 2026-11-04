@@ -1,4 +1,4 @@
-BGA_USER   := YOUR_STUDIO_USERNAME
+BGA_USER   := maksskv
 BGA_HOST   := 1.studio.boardgamearena.com
 BGA_PORT   := 2022
 BGA_GAME   := stpatrick
