@@ -14,8 +14,12 @@ const BgaAnimations = await importEsmLib('bga-animations', '1.x');
 const BgaCards = await importEsmLib('bga-cards', '1.x');
 
 const SUITS = { 1: '♣', 2: '✚', 3: '♬', 4: '🐍' };
-const SUIT_NAMES = { 1: _('Clover'), 2: _('Cross'), 3: _('Harp'), 4: _('Snake') };
+const SUIT_KEYS = { 1: 'Clover', 2: 'Cross', 3: 'Harp', 4: 'Snake' };
 const SUIT_CLOVER = 1, SUIT_CROSS = 2, SUIT_HARP = 3, SUIT_SNAKE = 4;
+
+function suitName(suit) {
+    return _(SUIT_KEYS[suit]);
+}
 
 function cardBites(card) {
     if (card.suit === SUIT_SNAKE) return 1;
@@ -58,6 +62,8 @@ class PassCards {
 
     onPlayerActivationChange(args, isCurrentPlayerActive) {
         const count = parseInt(args.count, 10);
+        // идемпотентно: хуки multiactive могут дублироваться
+        document.getElementById('stp-pass-confirm')?.remove();
         this.game.clearHandSelection();
         if (isCurrentPlayerActive) {
             this.bga.statusBar.setTitle(_('${you} must select ${count} card(s) to pass to your left neighbor').replace('${count}', String(count)));
@@ -71,6 +77,7 @@ class PassCards {
     }
 
     onLeavingState(args, isCurrentPlayerActive) {
+        document.getElementById('stp-pass-confirm')?.remove();
         this.game.clearHandSelection();
     }
 }
@@ -120,7 +127,7 @@ class HuntPlay {
             const legal = this.game.legalHandCards(leadSuit);
             this.bga.statusBar.setTitle(leadSuit === null
                 ? _('${you} must lead a trick — play any card')
-                : _('${you} must follow the lead suit (${suit})').replace('${suit}', SUIT_NAMES[leadSuit]));
+                : _('${you} must follow the lead suit (${suit})').replace('${suit}', suitName(leadSuit)));
             this.game.setHandSelectable(legal, 1, true);
         } else {
             this.bga.statusBar.setTitle(_('${actplayer} must play a card'));
@@ -248,7 +255,7 @@ export class Game {
             ${bites > 0 ? `<span class="stp-card-bites">${'🦷'.repeat(bites)}</span>` : ''}
             ${isPatrick({ suit, value }) ? `<span class="stp-card-patrick">★</span>` : ''}
         `;
-        div.title = `${SUIT_NAMES[suit]} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
+        div.title = `${suitName(suit)} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
     }
 
     legalHandCards(leadSuit) {
@@ -260,12 +267,13 @@ export class Game {
     setHandSelectable(cards, maxSelected, singleClickPlay = false) {
         this.selectableMode = singleClickPlay ? 'play' : 'select';
         this.maxSelected = maxSelected;
+        this.handStock.setSelectionMode(singleClickPlay ? 'single' : 'multiple');
         this.handStock.setSelectableCards(cards);
     }
 
     clearHandSelection() {
         this.selectableMode = null;
-        this.handStock.setSelectableCards([]);
+        this.handStock.setSelectionMode('none');
     }
 
     onHandSelectionChange(selection) {

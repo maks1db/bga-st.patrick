@@ -106,6 +106,10 @@
 /* --- Карты ------------------------------------------------------------- */
 
 .stp-card {
+    --bga-cards_card-width: 68px;
+    --bga-cards_card-height: 94px;
+    --bga-cards_card-effective-width: 68px;
+    --bga-cards_card-effective-height: 94px;
     width: 68px;
     height: 94px;
     border-radius: 6px;
