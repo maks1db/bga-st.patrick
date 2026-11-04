@@ -1,65 +1,189 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * StPatrick implementation : © <Your name here> <Your email address here>
+ * StPatrick implementation : © Maksim <maxim@bga>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
+ *
+ * stpatrick.css — «Охота на змей» (St Patrick)
  */
 
-/*
-    This is the CSS stylesheet of your game User Interface.
-    
-    Styles defined on this file will be applied to HTML elements you create (in Game.js).
-    
-    Usually, you are using CSS to:
-    
-    1°) define the overall layout of your game
-        (ex: place the board on the top left, place player's hand beside, place the deck on the right, ...).
+/* --- Общая раскладка --------------------------------------------------- */
 
-    2°) create your CSS-sprites:
-        All images of your games should be gathered into a small number of image files. Then, using
-        background-image and background-position CSS properties, you create HTML blocks that can 
-        display these images correctly (see example below).
-    
-    3°) ... anything else:
-        It is really easy to add and remove CSS classes dynamically from your Javascript with
-        dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class
-        (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why,
-        very often, using CSS classes for the logic of your user interface allow you to do complex
-        thing easily.
-        
-        
-     Note: on the production platform, this file will be compressed and comments will be removed.
-           Consequently, don't hesitate to put as many comments as necessary.
-*/
+#stp-board {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
 
+#stp-players {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
 
-/* Note: you must not use any @import directive */
+.stp-player-zone {
+    min-width: 180px;
+    max-width: 260px;
+    flex: 1 1 180px;
+    border: 1px solid #88888844;
+    border-radius: 8px;
+    padding: 6px;
+    background: #88888811;
+}
 
+.stp-player-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    flex-wrap: wrap;
+}
 
-/********* You can start writing your CSS below this line: **********/
+.stp-hp {
+    font-weight: bold;
+}
 
+.stp-snakes {
+    margin-top: 4px;
+    min-height: 40px;
+}
 
-/*
-    Example of CSS sprites (a black token and a white token, 20x20px each, embedded in the same "tokens.png" 40x20px image):
+#stp-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
 
-    .white_token {
-        background-image: url('img/tokens.png');
-        background-position: 0px 0px;
-    }
-    .black_token {
-        background-image: url('img/tokens.png');
-        background-position: -20px 0px;
-    }
-    .token {
-        width: 20px;
-        height: 20px;
-        background-repeat: none;
-    }
-*/
+.stp-relics {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    min-height: 26px;
+    max-width: 520px;
+}
 
+.stp-relic-token {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffe9a3, #c9a227 70%, #8a6d1a);
+    border: 1px solid #8a6d1a;
+    box-shadow: 1px 1px 2px #00000055;
+}
 
+#stp-trick {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    min-height: 96px;
+}
 
+#stp-hand {
+    display: flex;
+    justify-content: center;
+    min-height: 110px;
+    width: 100%;
+}
 
+.stp-relic-input {
+    width: 64px;
+    padding: 6px;
+    margin-right: 6px;
+    border: 1px solid #888;
+    border-radius: 4px;
+}
+
+/* --- Карты ------------------------------------------------------------- */
+
+.stp-card {
+    width: 68px;
+    height: 94px;
+    border-radius: 6px;
+    border: 1px solid #33333388;
+    background: #f8f8f8;
+    position: relative;
+    box-shadow: 1px 2px 3px #00000044;
+    display: inline-block;
+}
+
+.stp-card-front {
+    width: 100%;
+    height: 100%;
+}
+
+.stp-card-back {
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(45deg, #1d5c33, #1d5c33 6px, #164a28 6px, #164a28 12px);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stp-card-back-logo {
+    font-size: 28px;
+    color: #ffffffcc;
+}
+
+.stp-card-suit {
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.stp-card-value {
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    font-size: 22px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+/* Масти */
+.stp-card-front[data-suit="1"] { background: #e8f5e9; }
+.stp-card-front[data-suit="1"] .stp-card-suit,
+.stp-card-front[data-suit="1"] .stp-card-value { color: #2e7d32; }
+.stp-card-front[data-suit="2"] { background: #fafafa; }
+.stp-card-front[data-suit="2"] .stp-card-suit,
+.stp-card-front[data-suit="2"] .stp-card-value { color: #616161; }
+.stp-card-front[data-suit="3"] { background: #fff3e0; }
+.stp-card-front[data-suit="3"] .stp-card-suit,
+.stp-card-front[data-suit="3"] .stp-card-value { color: #ef6c00; }
+.stp-card-front[data-suit="4"] { background: #263238; }
+.stp-card-front[data-suit="4"] .stp-card-suit,
+.stp-card-front[data-suit="4"] .stp-card-value { color: #eceff1; }
+
+.stp-card-bites {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 10px;
+    letter-spacing: -2px;
+}
+
+.stp-card-patrick {
+    position: absolute;
+    bottom: 26px;
+    left: 6px;
+    font-size: 18px;
+    color: #c9a227;
+}
+
+/* Тёмная тема: карты со светлым фоном читаемы, тёмная масть змеи тоже */
+html[data-theme="dark"] .stp-card-front[data-suit="4"] {
+    border-color: #99999966;
+}

@@ -1,223 +1,432 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * StPatrick implementation : © <Your name here> <Your email address here>
+ * StPatrick implementation : © Maksim <maxim@bga>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
- * 
- * In this file, you are describing the logic of your user interface, in Javascript language.
  *
+ * Game.js — client for «Охота на змей» (St Patrick).
  */
 
-/**
- * @typedef {Player & {
- *   energy: number
- * }} StPatrickPlayer
- */
-/**
- * @typedef {Gamedatas<StPatrickPlayer> & {
- * }} StPatrickGamedatas
- */
-/**
-* @typedef {Object} PlayerTurnArgs
-* @property {number[]} playableCardsIds
-*/
+const BgaAnimations = await importEsmLib('bga-animations', '1.x');
+const BgaCards = await importEsmLib('bga-cards', '1.x');
+
+const SUITS = { 1: '♣', 2: '✚', 3: '♬', 4: '🐍' };
+const SUIT_NAMES = { 1: _('Clover'), 2: _('Cross'), 3: _('Harp'), 4: _('Snake') };
+const SUIT_CLOVER = 1, SUIT_CROSS = 2, SUIT_HARP = 3, SUIT_SNAKE = 4;
+
+function cardBites(card) {
+    if (card.suit === SUIT_SNAKE) return 1;
+    if (card.value === 7 && (card.suit === SUIT_CROSS || card.suit === SUIT_HARP)) return 3;
+    return 0;
+}
+
+function isPatrick(card) {
+    return card.suit === SUIT_CLOVER && card.value === 7;
+}
 
 /**
- * We create one State class per declared state on the PHP side, to handle all state specific code here.
- * onEnteringState, onLeavingState and onPlayerActivationChange are predefined names that will be called by the framework.
- * When executing code in this state, you can access the args using this.args
+ * Раунды 2+: единственный игрок с минимумом HP выбирает 0/1/2.
  */
-class PlayerTurn {
-    /** @type {PlayerTurnArgs} */
-    args;
+class DecidePassCount {
+    constructor(game, bga) { this.game = game; this.bga = bga; }
 
-    /**
-     * @param {Game} game
-     * @param {Bga} bga
-     */
-    constructor(game, bga) {
-        this.game = game;
-        this.bga = bga;
+    onEnteringState(args, isCurrentPlayerActive) {
+        this.bga.statusBar.setTitle(isCurrentPlayerActive
+            ? _('${you} decide how many cards everyone passes (0, 1 or 2)')
+            : _('${actplayer} decides how many cards everyone passes'));
+        if (isCurrentPlayerActive) {
+            for (const n of [0, 1, 2]) {
+                this.bga.statusBar.addActionButton(_('${n} card(s)').replace('${n}', String(n)),
+                    () => this.bga.actions.performAction('actSetPassCount', { count: n }));
+            }
+        }
+    }
+}
+
+/**
+ * Одновременная передача карт соседу слева.
+ */
+class PassCards {
+    constructor(game, bga) { this.game = game; this.bga = bga; }
+
+    onEnteringState(args, isCurrentPlayerActive) {
+        this.onPlayerActivationChange(args, isCurrentPlayerActive);
     }
 
-    /**
-     * This method is called each time we are entering the game state. You can use this method to perform some user interface changes at this moment.
-     * 
-     * @param {PlayerTurnArgs} args 
-     * @param {boolean} isCurrentPlayerActive 
-     */
-    onEnteringState(args, isCurrentPlayerActive) {
-        this.bga.statusBar.setTitle(isCurrentPlayerActive ? 
-            _('${you} must play a card or pass') :
-            _('${actplayer} must play a card or pass')
-        );
-      
+    onPlayerActivationChange(args, isCurrentPlayerActive) {
+        const count = parseInt(args.count, 10);
+        this.game.clearHandSelection();
         if (isCurrentPlayerActive) {
-            const playableCardsIds = args.playableCardsIds; // returned by the PlayerTurn::getArgs
-
-            // Add test action buttons in the action status bar, simulating a card click:
-            playableCardsIds.forEach(
-                cardId => this.bga.statusBar.addActionButton(_('Play card with id ${card_id}').replace('${card_id}', `${cardId}`), () => this.onCardClick(cardId))
-            ); 
-
-            this.bga.statusBar.addActionButton(_('Pass'), () => this.bga.actions.performAction("actPass"), { color: 'secondary' }); 
+            this.bga.statusBar.setTitle(_('${you} must select ${count} card(s) to pass to your left neighbor').replace('${count}', String(count)));
+            this.game.setHandSelectable(this.game.myHand, count);
+            this.bga.statusBar.addActionButton(_('Pass selected cards'),
+                () => this.game.confirmPassSelection(count),
+                { id: 'stp-pass-confirm', disabled: true });
+        } else {
+            this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
         }
     }
 
-    /**
-     * This method is called each time we are leaving the game state. You can use this method to perform some user interface changes at this moment.
-     * 
-     * @param {PlayerTurnArgs} args 
-     * @param {boolean} isCurrentPlayerActive 
-     */
     onLeavingState(args, isCurrentPlayerActive) {
+        this.game.clearHandSelection();
+    }
+}
+
+/**
+ * Разбор реликвий: взять N или пас.
+ */
+class DraftRelics {
+    constructor(game, bga) { this.game = game; this.bga = bga; }
+
+    onEnteringState(args, isCurrentPlayerActive) {
+        const center = parseInt(args.center, 10);
+        if (isCurrentPlayerActive) {
+            this.bga.statusBar.setTitle(_('${you} must take relics or pass'));
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = 'stp-relic-count';
+            input.min = '1';
+            input.max = String(center);
+            input.value = '1';
+            input.className = 'stp-relic-input';
+            const takeBtn = this.bga.statusBar.addActionButton(_('Take'), () => {
+                const n = parseInt(input.value, 10);
+                if (n >= 1 && n <= center) {
+                    this.bga.actions.performAction('actTakeRelics', { count: n });
+                }
+            }, { id: 'stp-take-relics' });
+            takeBtn.insertAdjacentElement('beforebegin', input);
+            this.bga.statusBar.addActionButton(_('Pass'), () =>
+                this.bga.actions.performAction('actPassRelics'), { color: 'secondary' });
+        } else {
+            this.bga.statusBar.setTitle(_('${actplayer} is taking relics or passing'));
+        }
+    }
+}
+
+/**
+ * Охота на змей: выложить карту в взятку (обязательный выход в масть).
+ */
+class HuntPlay {
+    constructor(game, bga) { this.game = game; this.bga = bga; }
+
+    onEnteringState(args, isCurrentPlayerActive) {
+        this.game.clearHandSelection();
+        if (isCurrentPlayerActive) {
+            const leadSuit = args.leadSuit === null || args.leadSuit === undefined ? null : parseInt(args.leadSuit, 10);
+            const legal = this.game.legalHandCards(leadSuit);
+            this.bga.statusBar.setTitle(leadSuit === null
+                ? _('${you} must lead a trick — play any card')
+                : _('${you} must follow the lead suit (${suit})').replace('${suit}', SUIT_NAMES[leadSuit]));
+            this.game.setHandSelectable(legal, 1, true);
+        } else {
+            this.bga.statusBar.setTitle(_('${actplayer} must play a card'));
+        }
     }
 
-    /**
-     * This method is called each time the current player becomes active or inactive in a MULTIPLE_ACTIVE_PLAYER state. You can use this method to perform some user interface changes at this moment.
-     * on MULTIPLE_ACTIVE_PLAYER states, you may want to call this function in onEnteringState using `this.onPlayerActivationChange(args, isCurrentPlayerActive)` at the end of onEnteringState.
-     * If your state is not a MULTIPLE_ACTIVE_PLAYER one, you can delete this function.
-     * 
-     * @param {PlayerTurnArgs} args 
-     * @param {boolean} isCurrentPlayerActive 
-     */
-    onPlayerActivationChange(args, isCurrentPlayerActive) {
-    }
-
-    /**
-     * @param {number} card_id 
-     */
-    onCardClick(card_id) {
-        console.log('onCardClick', card_id);
-
-        this.bga.actions.performAction("actPlayCard", { 
-            card_id,
-        }).then(() =>  {                
-            // What to do after the server call if it succeeded
-            // (most of the time, nothing, as the game will react to notifs / change of state instead, so you can delete the `then`)
-        });        
+    onLeavingState(args, isCurrentPlayerActive) {
+        this.game.clearHandSelection();
     }
 }
 
 export class Game {
-    /**
-     * @param {Bga} bga
-     */
     constructor(bga) {
-        console.log('stpatrick constructor');
         this.bga = bga;
 
-        // Declare the State classes
-        this.playerTurn = new PlayerTurn(this, bga);
-        this.bga.states.register('PlayerTurn', this.playerTurn);
+        this.animationManager = new BgaAnimations.Manager({
+            animationsActive: () => this.bga.gameui.bgaAnimationsActive(),
+        });
+        this.cardsManager = new BgaCards.Manager({
+            animationManager: this.animationManager,
+            type: 'stp-card',
+            getId: (card) => card.id,
+            setupFrontDiv: (card, div) => this.setupCardFront(card, div),
+            setupBackDiv: (card, div) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
+            isCardVisible: (card) => true,
+        });
 
-        // Uncomment the next line to show debug informations about state changes in the console. Remove before going to production!
-        // this.bga.states.logger = console.log;
-            
-        // Here, you can init the global variables of your user interface
-        // Example:
-        // this.myGlobalValue = 0;
+        this.bga.states.register('DecidePassCount', new DecidePassCount(this, bga));
+        this.bga.states.register('PassCards', new PassCards(this, bga));
+        this.bga.states.register('DraftRelics', new DraftRelics(this, bga));
+        this.bga.states.register('HuntPlay', new HuntPlay(this, bga));
+
+        this.myHand = [];       // мои карты (объекты card)
+        this.currentTrick = []; // карты текущей взятки
+        this.snakeCards = {};   // pid => карты в открытой зоне
+        this.selectableMode = null; // null | 'select' | 'play'
+        this.maxSelected = 0;
     }
-    
-    /*
-        setup:
-        
-        This method must set up the game user interface according to current game situation specified
-        in parameters.
-        
-        The method is called each time the game interface is displayed to a player, ie:
-        _ when the game starts
-        _ when a player refreshes the game page (F5)
-        
-        "gamedatas" argument contains all datas retrieved by your "getAllDatas" PHP method.
-    */
-    
-    /**
-     * @param {StPatrickGamedatas} gamedatas
-     */
+
     setup(gamedatas) {
-        console.log("Starting game setup", gamedatas);
         this.gamedatas = gamedatas;
+        this.myHand = gamedatas.hand.map(c => this.normalizeCard(c));
+        this.currentTrick = gamedatas.trick.map(c => this.normalizeCard(c));
+        for (const player of Object.values(gamedatas.players)) {
+            const pid = parseInt(player.id, 10);
+            this.snakeCards[pid] = (gamedatas.snakes[pid] ?? []).map(c => this.normalizeCard(c));
+        }
 
-        // Example to add a div on the game area
-        this.bga.gameArea.getElement().insertAdjacentHTML('beforeend', `
-            <div id="player-tables"></div>
+        const area = this.bga.gameArea.getElement();
+        area.insertAdjacentHTML('beforeend', `
+            <div id="stp-board">
+                <div id="stp-players"></div>
+                <div id="stp-center">
+                    <div id="stp-relics" class="stp-relics"></div>
+                    <div id="stp-trick"></div>
+                </div>
+                <div id="stp-hand"></div>
+            </div>
         `);
-        
-        // Setting up player boards
-        Object.values(gamedatas.players).forEach(player => {
-            // example of setting up players boards
-            this.bga.playerPanels.getElement(Number(player.id)).insertAdjacentHTML('beforeend', `
-                <span id="energy-player-counter-${player.id}"></span> Energy
-            `);
-            const counter = new ebg.counter();
-            counter.create(`energy-player-counter-${player.id}`, {
-                value: player.energy,
-                playerCounter: 'energy',
-                playerId: Number(player.id)
-            });
 
-            // example of adding a div for each player
-            document.getElementById('player-tables').insertAdjacentHTML('beforeend', `
-                <div id="player-table-${player.id}">
-                    <strong>${player.name}</strong>
-                    <div>Player zone content goes here</div>
+        // Зоны игроков: открытые змеиные карты, HP, реликвии
+        for (const player of Object.values(gamedatas.players)) {
+            const pid = parseInt(player.id, 10);
+            document.getElementById('stp-players').insertAdjacentHTML('beforeend', `
+                <div class="stp-player-zone" id="stp-zone-${pid}">
+                    <div class="stp-player-head">
+                        <span class="stp-player-name" style="color:#${player.color}">${player.name}</span>
+                        <span class="stp-hp" id="stp-hp-${pid}" title="${_('Life points')}">❤ ${parseInt(player.score, 10)}</span>
+                        <span class="stp-relic-count" id="stp-relics-${pid}" title="${_('Relics')}">⛨ ${parseInt(gamedatas.relics[pid] ?? 0, 10)}</span>
+                    </div>
+                    <div class="stp-snakes" id="stp-snakes-${pid}"></div>
                 </div>
             `);
+        }
+
+        this.renderCenterRelics(parseInt(gamedatas.relicsCenter, 10));
+
+        // Стоки карт
+        this.handStock = new BgaCards.HandStock(this.cardsManager, document.getElementById('stp-hand'));
+        this.handStock.onSelectionChange = (selection) => this.onHandSelectionChange(selection);
+        this.trickStock = new BgaCards.LineStock(this.cardsManager, document.getElementById('stp-trick'));
+        this.snakeStocks = {};
+        for (const player of Object.values(gamedatas.players)) {
+            const pid = parseInt(player.id, 10);
+            this.snakeStocks[pid] = new BgaCards.LineStock(this.cardsManager, document.getElementById(`stp-snakes-${pid}`));
+        }
+
+        this.handStock.addCards(this.myHand);
+        if (this.currentTrick.length > 0) {
+            this.trickStock.addCards(this.currentTrick);
+        }
+        for (const player of Object.values(gamedatas.players)) {
+            const pid = parseInt(player.id, 10);
+            if (this.snakeCards[pid].length > 0) {
+                this.snakeStocks[pid].addCards(this.snakeCards[pid]);
+            }
+        }
+
+        this.bga.notifications.setupPromiseNotifications();
+    }
+
+    // -------------------------------------------------------------------------
+    // Карты
+    // -------------------------------------------------------------------------
+
+    normalizeCard(card) {
+        return {
+            id: parseInt(card.id, 10),
+            suit: parseInt(card.suit, 10),
+            value: parseInt(card.value, 10),
+            location: card.location,
+            locationArg: card.locationArg === null || card.locationArg === undefined ? null : parseInt(card.locationArg, 10),
+        };
+    }
+
+    setupCardFront(card, div) {
+        const suit = parseInt(card.suit, 10);
+        const value = parseInt(card.value, 10);
+        div.dataset.suit = suit;
+        div.dataset.value = value;
+        const bites = cardBites({ suit, value });
+        div.innerHTML = `
+            <span class="stp-card-suit">${SUITS[suit]}</span>
+            <span class="stp-card-value">${value}</span>
+            ${bites > 0 ? `<span class="stp-card-bites">${'🦷'.repeat(bites)}</span>` : ''}
+            ${isPatrick({ suit, value }) ? `<span class="stp-card-patrick">★</span>` : ''}
+        `;
+        div.title = `${SUIT_NAMES[suit]} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
+    }
+
+    legalHandCards(leadSuit) {
+        if (leadSuit === null) return [...this.myHand];
+        const follow = this.myHand.filter(c => c.suit === leadSuit);
+        return follow.length > 0 ? follow : [...this.myHand];
+    }
+
+    setHandSelectable(cards, maxSelected, singleClickPlay = false) {
+        this.selectableMode = singleClickPlay ? 'play' : 'select';
+        this.maxSelected = maxSelected;
+        this.handStock.setSelectableCards(cards);
+    }
+
+    clearHandSelection() {
+        this.selectableMode = null;
+        this.handStock.setSelectableCards([]);
+    }
+
+    onHandSelectionChange(selection) {
+        if (this.selectableMode === 'play') {
+            if (selection.length > 0) {
+                const card = selection[selection.length - 1];
+                this.handStock.unselectAll();
+                this.bga.actions.performAction('actPlayCard', { cardId: parseInt(card.id, 10) });
+            }
+        } else if (this.selectableMode === 'select') {
+            const btn = document.getElementById('stp-pass-confirm');
+            if (btn) btn.disabled = selection.length !== this.maxSelected;
+        }
+    }
+
+    confirmPassSelection(count) {
+        const selection = this.handStock.getSelection();
+        if (selection.length !== count) return;
+        this.bga.actions.performAction('actPassCards', {
+            cardIds: selection.map(c => parseInt(c.id, 10)),
         });
-        
-        // TODO: Set up your game interface here, according to "gamedatas"
-        
-
-        // Setup game notifications to handle (see "setupNotifications" method below)
-        this.setupNotifications();
-
-        console.log( "Ending game setup" );
     }
 
-    ///////////////////////////////////////////////////
-    //// Utility methods
-    
-    /*
-    
-        Here, you can defines some utility methods that you can use everywhere in your javascript
-        script. Typically, functions that are used in multiple state classes or outside a state class.
-    
-    */
+    // -------------------------------------------------------------------------
+    // Реликвии / HP
+    // -------------------------------------------------------------------------
 
-    
-    ///////////////////////////////////////////////////
-    //// Reaction to cometD notifications
+    renderCenterRelics(count) {
+        const el = document.getElementById('stp-relics');
+        el.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            el.insertAdjacentHTML('beforeend', '<div class="stp-relic-token"></div>');
+        }
+    }
 
-    /*
-        setupNotifications:
-        
-        In this method, you associate each of your game notifications with your local method to handle it.
-        
-        Note: game notification names correspond to "bga->notify->all" calls in your Game.php file.
-    
-    */
-    setupNotifications() {
-        console.log( 'notifications subscriptions setup' );
-        
-        // automatically listen to the notifications, based on the `notif_xxx` function on this class. 
-        // Uncomment the logger param to see debug information in the console about notifications.
-        this.bga.notifications.setupPromiseNotifications({
-            // logger: console.log
-        });
+    updatePlayerRelics(pid, count) {
+        const el = document.getElementById(`stp-relics-${pid}`);
+        if (el) el.textContent = `⛨ ${count}`;
     }
-    
-    // TODO: from this point and below, you can write your game notifications handling methods
-    
-    /*
-    Example:
-    async notif_cardPlayed( args ) {
-        // Note: args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-        
-        // TODO: play the card in the user interface.
+
+    updatePlayerHp(pid, score) {
+        const el = document.getElementById(`stp-hp-${pid}`);
+        if (el) el.textContent = `❤ ${score}`;
     }
-    */
+
+    adjustAllHp(deltas) {
+        for (const [pid, delta] of Object.entries(deltas)) {
+            if (parseInt(delta, 10) === 0) continue;
+            const el = document.getElementById(`stp-hp-${pid}`);
+            if (el) {
+                const current = parseInt(el.textContent.replace('❤ ', ''), 10);
+                this.updatePlayerHp(parseInt(pid, 10), current - parseInt(delta, 10));
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Уведомления
+    // -------------------------------------------------------------------------
+
+    async notif_newHand(args) {
+        const hand = args.hand.map(c => this.normalizeCard(c));
+        const oldIds = this.myHand.map(c => c.id).sort().join(',');
+        const newIds = hand.map(c => c.id).sort().join(',');
+        if (oldIds === newIds) return; // та же рука (первая раздача отражена в setup)
+        const old = [...this.myHand];
+        this.myHand = hand;
+        if (old.length > 0) {
+            await this.handStock.removeCards(old);
+        }
+        await this.handStock.addCards(hand);
+    }
+
+    notif_newRound(args) {
+        // Полная перестройка стола: очистка взятки и змей, реликвии в центр
+        if (this.currentTrick.length > 0) {
+            this.trickStock.removeCards([...this.currentTrick]);
+            this.currentTrick = [];
+        }
+        for (const player of Object.values(this.gamedatas.players)) {
+            const pid = parseInt(player.id, 10);
+            const snakes = this.snakeCards[pid] ?? [];
+            if (snakes.length > 0) {
+                this.snakeStocks[pid].removeCards([...snakes]);
+                this.snakeCards[pid] = [];
+            }
+            this.updatePlayerRelics(pid, 0);
+        }
+        this.renderCenterRelics(15);
+    }
+
+    notif_passCountDecided(args) { /* лог в журнале */ }
+
+    notif_cardsPassed(args) { /* лог в журнале; карты придут через newHand */ }
+
+    notif_relicsTaken(args) {
+        this.renderCenterRelics(parseInt(args.center, 10));
+        this.updatePlayerRelics(parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
+    }
+
+    notif_relicsPassed(args) { /* лог в журнале */ }
+
+    notif_curse(args) {
+        for (const pid of Object.keys(args.losses)) {
+            this.updatePlayerRelics(parseInt(pid, 10), 0);
+        }
+        this.renderCenterRelics(15);
+    }
+
+    notif_specialHunt(args) {
+        this.renderCenterRelics(0);
+    }
+
+    async notif_cardPlayed(args) {
+        const card = this.normalizeCard(args.card);
+        this.currentTrick.push(card);
+        const mine = this.myHand.some(c => c.id === card.id);
+        if (mine) {
+            this.myHand = this.myHand.filter(c => c.id !== card.id);
+            await this.trickStock.addCards([card], { fromStock: this.handStock });
+        } else {
+            await this.trickStock.addCards([card]);
+        }
+    }
+
+    async notif_trickWon(args) {
+        const winnerId = parseInt(args.player_id, 10);
+        const snakeCards = (args.snakeCards ?? []).map(c => this.normalizeCard(c));
+        if (snakeCards.length > 0) {
+            this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
+            await this.snakeStocks[winnerId].addCards(snakeCards, { fromStock: this.trickStock });
+        }
+        const discarded = this.currentTrick.filter(c => !snakeCards.some(s => s.id === c.id));
+        if (discarded.length > 0) {
+            await this.trickStock.removeCards(discarded);
+        }
+        this.currentTrick = [];
+    }
+
+    notif_huntScored(args) {
+        this.adjustAllHp(args.losses);
+    }
+
+    notif_specialScored(args) {
+        for (const [pid, gain] of Object.entries(args.gains)) {
+            if (parseInt(gain, 10) === 0) continue;
+            const el = document.getElementById(`stp-hp-${pid}`);
+            if (el) {
+                const current = parseInt(el.textContent.replace('❤ ', ''), 10);
+                this.updatePlayerHp(parseInt(pid, 10), current + parseInt(gain, 10));
+            }
+        }
+    }
+
+    notif_sacrifice(args) {
+        const saint = parseInt(args.player_id, 10);
+        const deltas = {};
+        for (const player of Object.values(this.gamedatas.players)) {
+            const pid = parseInt(player.id, 10);
+            if (pid !== saint) deltas[pid] = 3;
+        }
+        this.adjustAllHp(deltas);
+    }
 }
