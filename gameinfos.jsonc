@@ -6,33 +6,31 @@
 */
 {
     // Name of the game in English (will serve as the basis for translation)
-    "game_name": "My Great Game",
+    "game_name": "St Patrick",
 
     // Game publisher (use empty string if there is no publisher)
-    "publisher": "My Publishing Company",
+    "publisher": "Matagot",
 
     // Url of game publisher website
-    "publisher_website": "http://www.mypublishingcompany.com/",
+    "publisher_website": "https://www.matagot.com/",
 
     // Board Game Geek ID of the publisher
     "publisher_bgg_id": 0,
 
     // Board game geek ID of the game
-    "bgg_id": 654321,
+    "bgg_id": 0,
 
     // Players configuration that can be played (ex: 2 to 4 players)
-    "players": [2, 3, 4],
+    "players": [3, 4],
 
     // Suggest players to play with this number of players. Must be null if there is no such advice, or if there is only one possible player configuration.
-    // NB: the automatic lobby will try first the lowest number of players if this is not specified. So you _have to_ specify this parameter if the lowest player number is not compatible with the default options.
     "suggest_player_number": null,
 
-    // Discourage players to play with these numbers of players. Must be null if there is no such advice.
+    // Discourage players to play with these numbers of players. Must be null if there is no advice.
     "not_recommend_player_number": null,
-    // "not_recommend_player_number": [2, 3],      // <= example: this is not recommended to play this game with 2 or 3 players
 
     // Estimated game duration, in minutes (used only for the launch, afterward the real duration is computed)
-    "estimated_duration": 30,
+    "estimated_duration": 25,
 
     // Time in second add to a player when "giveExtraTime" is called (speed profile = fast)
     "fast_additional_time": 30,
@@ -62,15 +60,12 @@
     "is_coop": 0,
 
     // Language dependency. If false or not set, there is no language dependency. If true, all players at the table must speak the same language.
-    // If an array of shortcode languages such as { "1": "en", "2": "fr", "3": "it" } then all players at the table must speak the same language, and this language must be one of the listed languages.
-    // NB: the default will be the first language in this list spoken by the player, so you should list them by popularity/preference.
     "language_dependency": false,
 
     // Colors attributed to players
-    "player_colors": ["ff0000", "008000", "0000ff", "ffa500", "e94190", "982fff", "72c3b1", "f07f16", "bdd002", "7b7b7b", "000000", "ffffff"],
+    "player_colors": ["ff0000", "008000", "0000ff", "ffa500"],
 
     // Favorite colors support : if set to "true", support attribution of favorite colors based on player's preferences (see reattributeColorsBasedOnPreferences PHP method)
-    // NB: this parameter is used only to flag games supporting this feature; you must use (or not use) reattributeColorsBasedOnPreferences PHP method to actually enable or disable the feature.
     "favorite_colors_support": true,
 
     // When doing a rematch, the player order is swapped using a "rotation" so the starting player is not the same
@@ -78,10 +73,7 @@
     "disable_player_order_swap_on_rematch": false,
 
     // Game interface width
-    // See https://en.doc.boardgamearena.com/Your_game_mobile_version#Autoscale
     "game_interface_width": {
-        // Smallest logical width at which the game remains usable.
-        // Values below 320 are treated as 320. Default: 740.
         "min": 740
     },
 
