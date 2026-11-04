@@ -8,6 +8,13 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
 
 - Эта же сессия Kimi Code: `kimi --continue` в каталоге проекта (или `/sessions` в TUI).
 - Новая сессия: начать с чтения этого файла + `doc/ASSUMPTIONS.md` + `doc/AUTHOR_QUESTIONS.md`.
+- **Через расширение VS Code** (пользователь работает в нём): открыть VS Code
+  в каталоге проекта (workspace обязателен), расширение использует тот же CLI
+  и ту же базу сессий `~/.kimi-code/sessions/` — разговор будет доступен
+  в истории расширения; при необходимости задать `kimi.executablePath`.
+  Скиллы из `.claude/skills/` подхватываются автоматически (это каталог проекта).
+  Проверить, что MCP-сервер Chrome DevTools доступен и в расширении
+  (при необходимости — отдельная настройка MCP в VS Code).
 - Пользователь деплоит вручную через VS Code SFTP (`.vscode/sftp.json`, uploadOnSave);
   удаления файлов на сервере он НЕ передаёт — удалять серверные файлы можно через `curl`:
   `curl -s --key ~/.ssh/id_rsa_bga --user maksskv: -Q 'rm /stpatrick/<путь>' sftp://1.studio.boardgamearena.com:2022/stpatrick/`
