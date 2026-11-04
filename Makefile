@@ -1,10 +1,13 @@
-BGA_USER   := maksskv
-BGA_HOST   := 1.studio.boardgamearena.com
-BGA_PORT   := 2022
-BGA_GAME   := stpatrick
-BGA_REMOTE := $(BGA_GAME)
-BGA_KEY    := $(HOME)/.ssh/id_rsa_bga
-BGA_SCP    := scp -i $(BGA_KEY) -P $(BGA_PORT) -o IdentitiesOnly=yes
+# Deploy config is read from .vscode/sftp.json (single source of truth).
+SFTP_JSON  := .vscode/sftp.json
+
+BGA_USER   := $(shell jq -r .username $(SFTP_JSON))
+BGA_HOST   := $(shell jq -r .host $(SFTP_JSON))
+BGA_PORT   := $(shell jq -r .port $(SFTP_JSON))
+BGA_KEY    := $(shell jq -r .privateKeyPath $(SFTP_JSON))
+BGA_REMOTE := $(shell jq -r '.remotePath | sub("/$$"; "")' $(SFTP_JSON))
+BGA_SSH    := -i $(BGA_KEY) -P $(BGA_PORT) -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15
+BGA_SCP    := scp $(BGA_SSH)
 
 # Config files: keep the extension the scaffold shipped (.jsonc on recent scaffolds)
 DEPLOY_ROOT := dbmodel.sql $(wildcard gameinfos.jsonc gameinfos.inc.php stats.json stats.jsonc gameoptions.json gameoptions.jsonc gamepreferences.json gamepreferences.jsonc)
@@ -24,5 +27,4 @@ deploy: check
 	$(BGA_SCP) $(DEPLOY_PHP) $(BGA_USER)@$(BGA_HOST):$(BGA_REMOTE)/modules/php/
 	$(BGA_SCP) modules/php/States/*.php $(BGA_USER)@$(BGA_HOST):$(BGA_REMOTE)/modules/php/States/
 	$(BGA_SCP) $(DEPLOY_JS) $(BGA_USER)@$(BGA_HOST):$(BGA_REMOTE)/modules/js/
-	$(BGA_SCP) img/* $(BGA_USER)@$(BGA_HOST):$(BGA_REMOTE)/img/
 	@echo "OK Deployed"
