@@ -2,213 +2,288 @@
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * StPatrick implementation : © <Your name here> <Your email address here>
+ * StPatrick implementation : © Maksim <maxim@bga>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * Game.php
+ * Game.php — main game logic for «Охота на змей» (St Patrick).
  *
- * This is the main file for your game logic.
- *
- * In this PHP file, you are going to defines the rules of the game.
+ * Rules reference: doc/RULES.md — assumptions: doc/ASSUMPTIONS.md [Hx].
  */
 declare(strict_types=1);
 
 namespace Bga\Games\StPatrick;
 
-use Bga\Games\StPatrick\States\PlayerTurn;
-use Bga\GameFramework\Components\Counters\PlayerCounter;
+use Bga\Games\StPatrick\States\NewRound;
+use Bga\GameFramework\Components\ItemManager\ItemLocation;
+use Bga\GameFramework\Components\ItemManager\ItemManager;
+use Bga\GameFramework\Helpers\Collection;
 
 class Game extends \Bga\GameFramework\Table
 {
-    public static array $CARD_TYPES;
+    public const SUIT_CLOVER = 1; // клевер (зелёные)
+    public const SUIT_CROSS = 2;  // крест (белые)
+    public const SUIT_HARP = 3;   // арфа (оранжевые)
+    public const SUIT_SNAKE = 4;  // змея (чёрные)
+    public const SUITS = [self::SUIT_CLOVER, self::SUIT_CROSS, self::SUIT_HARP, self::SUIT_SNAKE];
 
-    public PlayerCounter $playerEnergy;
+    public const CARD_MIN = 1;
+    public const CARD_MAX = 9;
 
-    /**
-     * Your global variables labels:
-     *
-     * Here, you can assign labels to global variables you are using for this game. You can use any number of global
-     * variables with IDs between 10 and 99. If you want to store any type instead of int, use $this->globals instead.
-     *
-     * NOTE: afterward, you can get/set the global variables with `getGameStateValue`, `setGameStateInitialValue` or
-     * `setGameStateValue` functions.
-     */
+    public const START_HP = 20;
+    public const RELIC_COUNT = 15;
+    public const SNAKE_BITES = 1;
+    public const BONUS_CARD_BITES = 3; // 7 креста и 7 арфы [H13]
+    public const TOTAL_BITES = 15;     // для самопожертвования [H15]
+    public const SACRIFICE_PENALTY = 3;
+
+    /** @var ItemManager<Card> */
+    public ItemManager $cards;
+
+    /** @var ItemManager<Relic> */
+    public ItemManager $relics;
+
     public function __construct()
     {
         parent::__construct();
 
-        $this->playerEnergy = $this->bga->counterFactory->createPlayerCounter('energy');
-
-        self::$CARD_TYPES = [
-            1 => [
-                "card_name" => clienttranslate('Troll'), // ...
-            ],
-            2 => [
-                "card_name" => clienttranslate('Goblin'), // ...
-            ],
-            // ...
-        ];
-
-        /* example of notification decorator.
-        // automatically complete notification args when needed
-        $this->bga->notify->addDecorator(function(string $message, array $args) {
-            if (isset($args['player_id']) && !isset($args['player_name']) && str_contains($message, '${player_name}')) {
-                $args['player_name'] = $this->getPlayerNameById($args['player_id']);
-            }
-        
-            if (isset($args['card_id']) && !isset($args['card_name']) && str_contains($message, '${card_name}')) {
-                $args['card_name'] = self::$CARD_TYPES[$args['card_id']]['card_name'];
-                $args['i18n'][] = ['card_name'];
-            }
-            
-            return $args;
-        });*/
+        $this->cards = $this->bga->itemManagerFactory->createItemManager(Card::class, locations: [
+            new ItemLocation('deck'),
+            new ItemLocation('hand'),    // [hand, playerId]
+            new ItemLocation('passed'),  // [passed, recipientPlayerId] — выбранные для передачи (взакрытую)
+            new ItemLocation('trick'),   // [trick, playerId]
+            new ItemLocation('snakes'),  // [snakes, playerId] — лицом вверх, публично [H14]
+            new ItemLocation('discard'),
+        ]);
+        $this->relics = $this->bga->itemManagerFactory->createItemManager(Relic::class, locations: [
+            new ItemLocation('center'),
+            new ItemLocation('held'),    // [held, playerId]
+        ]);
     }
 
-    /**
-     * Compute and return the current game progression.
-     *
-     * The number returned must be an integer between 0 and 100.
-     *
-     * This method is called each time we are in a game state with the "updateGameProgression" property set to true.
-     *
-     * @return int
-     */
-    public function getGameProgression()
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    /** @return int[] clockwise player ids */
+    public function playerIds(): array
     {
-        // TODO: compute and return the game progression
-
-        return 0;
+        $table = $this->getNextPlayerTable(); // [0 => first player, pid => next pid]
+        unset($table[0]);
+        return array_map('intval', array_keys($table));
     }
 
-    /**
-     * Migrate database.
-     *
-     * You don't have to care about this until your game has been published on BGA. Once your game is on BGA, this
-     * method is called everytime the system detects a game running with your old database scheme. In this case, if you
-     * change your database scheme, you just have to apply the needed changes in order to update the game database and
-     * allow the game to continue to run with your new version.
-     *
-     * @param int $from_version
-     * @return void
-     */
+    /** Сосед слева = следующий по часовой стрелке [H9]. */
+    public function leftNeighbor(int $playerId): int
+    {
+        return (int)$this->getPlayerAfter($playerId);
+    }
+
+    public static function cardBites(Card $card): int
+    {
+        if ($card->suit === self::SUIT_SNAKE) {
+            return self::SNAKE_BITES;
+        }
+        if ($card->value === 7 && ($card->suit === self::SUIT_CROSS || $card->suit === self::SUIT_HARP)) {
+            return self::BONUS_CARD_BITES;
+        }
+        return 0; // все клеверы (включая Патрика) и прочие карты безвредны [H11]
+    }
+
+    public static function isPatrick(Card $card): bool
+    {
+        return $card->suit === self::SUIT_CLOVER && $card->value === 7;
+    }
+
+    public function findPatrickHolder(): int
+    {
+        $patrick = $this->cards->getItemsByFieldNames(['suit' => self::SUIT_CLOVER, 'value' => 7])->first();
+        return (int)$patrick->locationArg;
+    }
+
+    /** @return Collection<Card> */
+    public function getHand(int $playerId): Collection
+    {
+        return $this->cards->getItemsInLocation(['hand', $playerId]);
+    }
+
+    public function relicCount(int $playerId): int
+    {
+        return $this->relics->countItemsInLocation(['held', $playerId]);
+    }
+
+    public function centerRelicCount(): int
+    {
+        return $this->relics->countItemsInLocation('center');
+    }
+
+    /** Сумма укусов на открытых змеиных картах игрока. */
+    public function bitesOf(int $playerId): int
+    {
+        $total = 0;
+        foreach ($this->cards->getItemsInLocation(['snakes', $playerId]) as $card) {
+            $total += self::cardBites($card);
+        }
+        return $total;
+    }
+
+    /** Карты, которые игрок может сейчас выложить в текущую взятку. */
+    public function legalCardIds(int $playerId): array
+    {
+        $hand = $this->getHand($playerId);
+        /** @var array<int, array{playerId: int, cardId: int}> $plays */
+        $plays = $this->bga->globals->get('trick_plays');
+        if (count($plays) === 0) {
+            return array_map('intval', array_keys($hand->all()));
+        }
+        $leadCard = $this->cards->getItemById($plays[0]['cardId']);
+        $leadSuit = $leadCard->suit;
+        $follow = $hand->filter(fn(Card $c) => $c->suit === $leadSuit);
+        if (!$follow->isEmpty()) {
+            return array_map('intval', array_keys($follow->all()));
+        }
+        return array_map('intval', array_keys($hand->all()));
+    }
+
+    /** Передать все карты всех игроков соседу слева (после проклятия). */
+    public function passAllHandsLeft(): void
+    {
+        $hands = [];
+        foreach ($this->playerIds() as $pid) {
+            $hands[$pid] = $this->getHand($pid);
+        }
+        foreach ($hands as $pid => $cards) {
+            $this->cards->moveItems($cards, ['hand', $this->leftNeighbor($pid)]);
+        }
+    }
+
+    /** Разослать каждому игроку его полную руку (приватное уведомление). */
+    public function notifyHands(string $message = 'You received cards'): void
+    {
+        foreach ($this->playerIds() as $pid) {
+            $this->bga->notify->player($pid, 'newHand', clienttranslate($message), [
+                'hand' => $this->getHand($pid)->values(),
+            ]);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Framework entry points
+    // -------------------------------------------------------------------------
+
+    public function getGameProgression(): int
+    {
+        $players = $this->getCollectionFromDb("SELECT `player_id`, `player_score` FROM `player`");
+        $maxHp = max(array_map('intval', array_column($players, 'player_score')));
+        return max(0, min(100, 100 - 5 * $maxHp)); // 20 HP => 0, 0 HP => 100
+    }
+
     public function upgradeTableDb($from_version)
     {
-//       if ($from_version <= 1404301345)
-//       {
-//            // ! important ! Use `DBPREFIX_<table_name>` for all tables
-//
-//            $sql = "ALTER TABLE `DBPREFIX_xxxxxxx` ....";
-//            $this->applyDbUpgradeToAllDB( $sql );
-//       }
-//
-//       if ($from_version <= 1405061421)
-//       {
-//            // ! important ! Use `DBPREFIX_<table_name>` for all tables
-//
-//            $sql = "CREATE TABLE `DBPREFIX_xxxxxxx` ....";
-//            $this->applyDbUpgradeToAllDB( $sql );
-//       }
     }
 
-    /*
-     * Gather all information about current game situation (visible by the current player).
-     *
-     * The method is called each time the game interface is displayed to a player, i.e.:
-     *
-     * - when the game starts
-     * - when a player refreshes the game page (F5)
-     */
-    protected function getAllDatas(int $currentPlayerId): array
+    public function getAllDatas(int $currentPlayerId): array
     {
         $result = [];
-        // WARNING: We must only return information visible by the current player (using $currentPlayerId).
 
-        // Get information about players.
-        // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
-        $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` AS `id`, `player_score` AS `score` FROM `player`"
+        $result['players'] = $this->getCollectionFromDb(
+            "SELECT `player_id` AS `id`, `player_name` AS `name`, `player_color` AS `color`, `player_score` AS `score` FROM `player`"
         );
-        $this->playerEnergy->fillResult($result);
 
-        // TODO: Gather all information about current game situation (visible by player $currentPlayerId).
+        $relics = [];
+        foreach ($this->playerIds() as $pid) {
+            $relics[$pid] = $this->relicCount($pid);
+        }
+        $result['relics'] = $relics; // [pid => relic count], публично
+        $result['relicsCenter'] = $this->centerRelicCount();
+
+        // Публичные зоны
+        $snakes = [];
+        foreach ($this->playerIds() as $pid) {
+            $snakes[$pid] = $this->cards->getItemsInLocation(['snakes', $pid])->values();
+        }
+        $result['snakes'] = $snakes;
+
+        /** @var array<int, array{playerId: int, cardId: int}> $plays */
+        $plays = $this->bga->globals->get('trick_plays');
+        $trickCards = [];
+        foreach ($plays as $play) {
+            $card = $this->cards->getItemById($play['cardId']);
+            if ($card !== null) {
+                $trickCards[] = $card;
+            }
+        }
+        $result['trick'] = $trickCards;
+
+        // Приватная рука текущего игрока
+        $result['hand'] = $currentPlayerId > 0 ? $this->getHand($currentPlayerId)->values() : [];
+
+        $result['round'] = (int)$this->bga->globals->get('round');
+        $result['specialHunt'] = (bool)$this->bga->globals->get('special_hunt');
 
         return $result;
     }
 
     /**
-     * This method is called only once, when a new game is launched. In this method, you must setup the game
-     *  according to the game rules, so that the game is ready to be played.
+     * @param array<int, array{player_name: string}> $players
      */
     protected function setupNewGame($players, $options = [])
     {
-        $this->playerEnergy->initDb(array_keys($players), initialValue: 2);
-
-        // Set the colors of the players with HTML color code. The default below is red/green/blue/orange/brown. The
-        // number of colors defined here must correspond to the maximum number of players allowed for the gams.
         $gameinfos = $this->getGameinfos();
-        $default_colors = $gameinfos['player_colors'];
-
-        foreach ($players as $player_id => $player) {
-            // Now you can access both $player_id and $player array
-            $query_values[] = vsprintf("(%s, '%s', '%s')", [
-                $player_id,
-                array_shift($default_colors),
-                addslashes($player["player_name"]),
-            ]);
+        $colors = $gameinfos['player_colors'];
+        $values = [];
+        foreach ($players as $pid => $player) {
+            $values[] = vsprintf("(%s, '%s', '%s')", [$pid, array_shift($colors), addslashes($player['player_name'])]);
         }
-
-        // Create players based on generic information.
-        //
-        // NOTE: You can add extra field on player table in the database (see dbmodel.sql) and initialize
-        // additional fields directly here.
-        static::DbQuery(
-            sprintf(
-                "INSERT INTO `player` (`player_id`, `player_color`, `player_name`) VALUES %s",
-                implode(",", $query_values)
-            )
-        );
-
-        $this->reattributeColorsBasedOnPreferences($players, $gameinfos["player_colors"]);
+        $this->DbQuery("INSERT INTO `player` (`player_id`, `player_color`, `player_name`) VALUES " . implode(',', $values));
+        $this->reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         $this->reloadPlayersBasicInfos();
 
-        // Init global values with their initial values.
+        // --- Компоненты ---
+        $this->cards->initDb();
+        $rows = [];
+        foreach (self::SUITS as $suit) {
+            for ($value = self::CARD_MIN; $value <= self::CARD_MAX; $value++) {
+                $rows[] = ['location' => 'deck', 'suit' => $suit, 'value' => $value];
+            }
+        }
+        $this->cards->createItems($rows);
 
-        // Init game statistics.
-        //
-        // NOTE: statistics used in this file must be defined in your `stats.inc.php` file.
+        $this->relics->initDb();
+        $relicRows = [];
+        for ($i = 0; $i < self::RELIC_COUNT; $i++) {
+            $relicRows[] = ['location' => 'center'];
+        }
+        $this->relics->createItems($relicRows);
 
-        // Dummy content.
-        // $this->tableStats->init('table_teststat1', 0);
-        // $this->playerStats->init('player_teststat1', 0);
+        // --- Счёт и статистика ---
+        $pids = array_map('intval', array_keys($players));
+        foreach ($pids as $pid) {
+            $this->bga->playerScore->set($pid, self::START_HP);
+        }
+        $this->bga->tableStats->init('rounds_played', 0);
+        $this->bga->playerStats->init(['bites_taken', 'relics_taken', 'tricks_won'], 0);
 
-        // TODO: Setup the initial game situation here.
+        // --- Глобальные переменные ---
+        $this->bga->globals->set('round', 0);
+        $this->bga->globals->set('pass_count', 1);
+        $this->bga->globals->set('pass_cycles', 0);
+        $this->bga->globals->set('special_hunt', false);
+        $this->bga->globals->set('trick_plays', []);
+        $this->bga->globals->set('passed_players', []);
 
-        // Activate first player once everything has been initialized and ready.
         $this->activeNextPlayer();
 
-        return PlayerTurn::class;
+        return NewRound::class;
     }
 
     /**
-     * Example of debug function.
-     * Here, jump to a state you want to test (by default, jump to next player state)
-     * You can trigger it on Studio using the Debug button on the right of the top bar.
+     * Debug: jump to a state (Studio debug panel).
      */
-    public function debug_goToState(int $state = 3) {
+    public function debug_goToState(int $state = 2)
+    {
         $this->gamestate->jumpToState($state);
     }
-
-    /*
-    Another example of debug function, to easily create situations you want to test.
-    Here, put a card you want to test in your hand (assuming you use the Deck component).
-
-    public function debug_setCardInHand(int $cardType, int $playerId) {
-        $card = array_values($this->cards->getCardsOfType($cardType))[0];
-        $this->cards->moveCard($card['id'], 'hand', $playerId);
-    }
-    */
 }
