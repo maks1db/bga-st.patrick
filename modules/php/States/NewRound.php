@@ -27,9 +27,13 @@ class NewRound extends GameState
         $this->bga->globals->set('round', $round);
         $this->bga->tableStats->inc('rounds_played', 1);
 
-        foreach (['hand', 'trick', 'snakes', 'passed', 'discard'] as $loc) {
-            $this->game->cards->moveAllItemsInLocation($loc, 'deck');
+        foreach ($this->game->playerIds() as $pid) {
+            $this->game->cards->moveAllItemsInLocation(['hand', $pid], 'deck');
+            $this->game->cards->moveAllItemsInLocation(['trick', $pid], 'deck');
+            $this->game->cards->moveAllItemsInLocation(['snakes', $pid], 'deck');
+            $this->game->cards->moveAllItemsInLocation(['passed', $pid], 'deck');
         }
+        $this->game->cards->moveAllItemsInLocation('discard', 'deck');
         $this->game->cards->shuffle('deck');
         $this->game->relics->moveAllItemsInLocation('held', 'center');
 

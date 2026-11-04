@@ -8,20 +8,20 @@
         }
     },
 
-    // Statistics for each player
+    // Statistics for each player (ids unique across table+player: table uses 10)
     "player": {
         "bites_taken": {
-            "id": 10,
+            "id": 11,
             "name": "Snake bites taken",
             "type": "int"
         },
         "relics_taken": {
-            "id": 11,
+            "id": 12,
             "name": "Relics taken",
             "type": "int"
         },
         "tricks_won": {
-            "id": 12,
+            "id": 13,
             "name": "Tricks won",
             "type": "int"
         }
