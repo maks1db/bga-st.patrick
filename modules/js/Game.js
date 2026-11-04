@@ -149,7 +149,13 @@ export class Game {
         this.cardsManager = new BgaCards.Manager({
             animationManager: this.animationManager,
             type: 'stp-card',
+            cardWidth: 68,
+            cardHeight: 94,
             getId: (card) => card.id,
+            setupDiv: (card, div) => {
+                div.style.width = '68px';
+                div.style.height = '94px';
+            },
             setupFrontDiv: (card, div) => this.setupCardFront(card, div),
             setupBackDiv: (card, div) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
             isCardVisible: (card) => true,
