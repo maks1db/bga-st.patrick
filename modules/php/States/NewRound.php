@@ -52,6 +52,7 @@ class NewRound extends GameState
 
         if ($round === 1) {
             $this->bga->globals->set('pass_count', 1);
+            $this->gamestate->setAllPlayersMultiactive();
             return PassCards::class;
         }
 
@@ -68,6 +69,7 @@ class NewRound extends GameState
             return DecidePassCount::class;
         }
         $this->bga->globals->set('pass_count', 1);
+        $this->gamestate->setAllPlayersMultiactive();
         return PassCards::class;
     }
 }

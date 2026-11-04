@@ -36,8 +36,12 @@ class DecidePassCount extends GameState
             'count' => $count,
         ]);
 
-        $this->gamestate->changeActivePlayer($this->game->findPatrickHolder());
-        return $count === 0 ? DraftRelics::class : PassCards::class;
+        if ($count === 0) {
+            $this->gamestate->changeActivePlayer($this->game->findPatrickHolder());
+            return DraftRelics::class;
+        }
+        $this->gamestate->setAllPlayersMultiactive();
+        return PassCards::class;
     }
 
     public function zombie(int $playerId): string

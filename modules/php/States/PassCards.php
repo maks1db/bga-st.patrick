@@ -24,7 +24,7 @@ class PassCards extends GameState
 
     public function onEnteringState(int $activePlayerId)
     {
-        $this->gamestate->setAllPlayersMultiactive();
+        // активация всех игроков происходит в состоянии-источнике (NewRound / DecidePassCount)
     }
 
     public function getArgs(): array
