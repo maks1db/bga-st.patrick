@@ -123,6 +123,10 @@
 .stp-card-front {
     width: 100%;
     height: 100%;
+    border-radius: 6px;
+    background-image: url('img/main-sprite.png');
+    background-size: 612px 376px; /* 9×68 × 4×94 — ячейка 136×188 спрайта ужата вдвое */
+    background-position: 0 0;
 }
 
 .stp-card-back {
@@ -138,56 +142,4 @@
 .stp-card-back-logo {
     font-size: 28px;
     color: #ffffffcc;
-}
-
-.stp-card-suit {
-    position: absolute;
-    top: 4px;
-    left: 6px;
-    font-size: 20px;
-    line-height: 1;
-}
-
-.stp-card-value {
-    position: absolute;
-    bottom: 4px;
-    left: 6px;
-    font-size: 22px;
-    font-weight: bold;
-    line-height: 1;
-}
-
-/* Масти */
-.stp-card-front[data-suit="1"] { background: #e8f5e9; }
-.stp-card-front[data-suit="1"] .stp-card-suit,
-.stp-card-front[data-suit="1"] .stp-card-value { color: #2e7d32; }
-.stp-card-front[data-suit="2"] { background: #fafafa; }
-.stp-card-front[data-suit="2"] .stp-card-suit,
-.stp-card-front[data-suit="2"] .stp-card-value { color: #616161; }
-.stp-card-front[data-suit="3"] { background: #fff3e0; }
-.stp-card-front[data-suit="3"] .stp-card-suit,
-.stp-card-front[data-suit="3"] .stp-card-value { color: #ef6c00; }
-.stp-card-front[data-suit="4"] { background: #263238; }
-.stp-card-front[data-suit="4"] .stp-card-suit,
-.stp-card-front[data-suit="4"] .stp-card-value { color: #eceff1; }
-
-.stp-card-bites {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    font-size: 10px;
-    letter-spacing: -2px;
-}
-
-.stp-card-patrick {
-    position: absolute;
-    bottom: 30px;
-    left: 6px;
-    font-size: 18px;
-    color: #c9a227;
-}
-
-/* Тёмная тема: карты со светлым фоном читаемы, тёмная масть змеи тоже */
-html[data-theme="dark"] .stp-card-front[data-suit="4"] {
-    border-color: #99999966;
 }

@@ -13,9 +13,10 @@
 const BgaAnimations = await importEsmLib('bga-animations', '1.x');
 const BgaCards = await importEsmLib('bga-cards', '1.x');
 
-const SUITS = { 1: '♣', 2: '✚', 3: '♬', 4: '🐍' };
 const SUIT_KEYS = { 1: 'Clover', 2: 'Cross', 3: 'Harp', 4: 'Snake' };
 const SUIT_CLOVER = 1, SUIT_CROSS = 2, SUIT_HARP = 3, SUIT_SNAKE = 4;
+// ряд масти в img/main-sprite.png (ячейка 136×188, порядок колонок — значение 1–9)
+const SUIT_SPRITE_ROW = { [SUIT_CLOVER]: 0, [SUIT_HARP]: 1, [SUIT_SNAKE]: 2, [SUIT_CROSS]: 3 };
 
 function suitName(suit) {
     return _(SUIT_KEYS[suit]);
@@ -25,10 +26,6 @@ function cardBites(card) {
     if (card.suit === SUIT_SNAKE) return 1;
     if (card.value === 7 && (card.suit === SUIT_CROSS || card.suit === SUIT_HARP)) return 3;
     return 0;
-}
-
-function isPatrick(card) {
-    return card.suit === SUIT_CLOVER && card.value === 7;
 }
 
 /**
@@ -252,15 +249,9 @@ export class Game {
     setupCardFront(card, div) {
         const suit = parseInt(card.suit, 10);
         const value = parseInt(card.value, 10);
-        div.dataset.suit = suit;
-        div.dataset.value = value;
+        const row = SUIT_SPRITE_ROW[suit];
+        div.style.backgroundPosition = `-${(value - 1) * 68}px -${row * 94}px`;
         const bites = cardBites({ suit, value });
-        div.innerHTML = `
-            <span class="stp-card-suit">${SUITS[suit]}</span>
-            <span class="stp-card-value">${value}</span>
-            ${bites > 0 ? `<span class="stp-card-bites">${'🦷'.repeat(bites)}</span>` : ''}
-            ${isPatrick({ suit, value }) ? `<span class="stp-card-patrick">★</span>` : ''}
-        `;
         div.title = `${suitName(suit)} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
     }
 
