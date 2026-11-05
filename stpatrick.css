@@ -103,6 +103,21 @@
     border-radius: 4px;
 }
 
+/* --- Элементы: img/elements.png (спрайт 4 ячейки по 192×192) ------------- */
+
+.stp-elt {
+    display: inline-block;
+    background-image: url('img/elements.png');
+    background-repeat: no-repeat;
+    background-size: 400% 100%;
+    vertical-align: middle;
+}
+
+.stp-elt-heart { background-position: 0% 0; }
+.stp-elt-snake { background-position: 33.3333% 0; }
+.stp-elt-cutesnake { background-position: 66.6667% 0; }
+.stp-elt-relic { background-position: 100% 0; }
+
 /* --- Карты ------------------------------------------------------------- */
 
 .stp-card {
