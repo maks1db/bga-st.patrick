@@ -336,6 +336,7 @@ export class Game {
             <div id="stp-draft-overlay">
                 <div class="stp-draft-title"><span class="stp-draft-title-text">${_('Relic Draft')}</span></div>
                 <div class="stp-draft-remaining">${_('Remaining:')} <span id="stp-draft-remaining-n">${center}</span></div>
+                <div class="stp-draft-controls-slot" id="stp-draft-controls-slot"></div>
                 <div class="stp-draft-chest-wrap">
                     <div class="stp-chest stp-draft-chest" id="stp-draft-chest">
                         <div class="stp-draft-relics" id="stp-draft-chest-relics"></div>
@@ -396,7 +397,7 @@ export class Game {
     mountDraftControls(center, isCurrentPlayerActive) {
         document.getElementById('stp-draft-controls')?.remove();
         if (!isCurrentPlayerActive) return;
-        document.getElementById('stp-draft-chest').insertAdjacentHTML('beforeend', `
+        document.getElementById('stp-draft-controls-slot').insertAdjacentHTML('beforeend', `
             <div class="stp-draft-controls" id="stp-draft-controls">
                 <div class="stp-take-stepper">
                     <button class="stp-step-btn" id="stp-step-down" type="button">−</button>
