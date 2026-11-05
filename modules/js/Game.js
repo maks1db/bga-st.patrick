@@ -39,6 +39,7 @@ class DecidePassCount {
     constructor(game, bga) { this.game = game; this.bga = bga; }
 
     onEnteringState(args, isCurrentPlayerActive) {
+        this.game.closeDraftOverlay();
         this.bga.statusBar.setTitle(isCurrentPlayerActive
             ? _('${you} decide how many cards everyone passes (0, 1 or 2)')
             : _('${actplayer} decides how many cards everyone passes'));
@@ -58,6 +59,7 @@ class PassCards {
     constructor(game, bga) { this.game = game; this.bga = bga; }
 
     onEnteringState(args, isCurrentPlayerActive) {
+        this.game.closeDraftOverlay();
         this.onPlayerActivationChange(args, isCurrentPlayerActive);
     }
 
@@ -84,35 +86,21 @@ class PassCards {
 }
 
 /**
- * Разбор реликвий: взять N или пас.
+ * Разбор реликвий: полноэкранный оверлей с ларцом.
+ * Оверлей живёт между входами (следующий драфтер) и закрывается
+ * при входе в любую другую фазу.
  */
 class DraftRelics {
     constructor(game, bga) { this.game = game; this.bga = bga; }
 
     onEnteringState(args, isCurrentPlayerActive) {
-        const center = parseInt(args.center, 10);
-        if (isCurrentPlayerActive) {
-            this.bga.statusBar.setTitle(_('${you} must take relics or pass'));
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.id = 'stp-relic-count';
-            input.min = '1';
-            input.max = String(center);
-            input.value = '1';
-            input.className = 'stp-relic-input';
-            const takeBtn = this.bga.statusBar.addActionButton(_('Take'), () => {
-                const n = parseInt(input.value, 10);
-                if (n >= 1 && n <= center) {
-                    this.bga.actions.performAction('actTakeRelics', { count: n });
-                }
-            }, { id: 'stp-take-relics' });
-            takeBtn.insertAdjacentElement('beforebegin', input);
-            this.bga.statusBar.addActionButton(_('Pass'), () =>
-                this.bga.actions.performAction('actPassRelics'), { color: 'secondary' });
-        } else {
-            this.bga.statusBar.setTitle(_('${actplayer} is taking relics or passing'));
-        }
+        this.bga.statusBar.setTitle(isCurrentPlayerActive
+            ? _('${you} must take relics or pass')
+            : _('${actplayer} is taking relics or passing'));
+        this.game.openDraftOverlay(args, isCurrentPlayerActive);
     }
+
+    onLeavingState() { /* оверлей закрывается при входе в другую фазу */ }
 }
 
 /**
@@ -122,6 +110,7 @@ class HuntPlay {
     constructor(game, bga) { this.game = game; this.bga = bga; }
 
     onEnteringState(args, isCurrentPlayerActive) {
+        this.game.closeDraftOverlay();
         this.game.clearHandSelection();
         if (isCurrentPlayerActive) {
             const leadSuit = args.leadSuit === null || args.leadSuit === undefined ? null : parseInt(args.leadSuit, 10);
@@ -332,6 +321,112 @@ export class Game {
     }
 
     // -------------------------------------------------------------------------
+    // Оверлей разбора реликвий
+    // -------------------------------------------------------------------------
+
+    openDraftOverlay(args, isCurrentPlayerActive) {
+        const center = parseInt(args.center, 10);
+        if (document.getElementById('stp-draft-overlay')) {
+            // повторный вход (следующий драфтер) — интро не повторяем
+            this.syncDraftOverlay(center, isCurrentPlayerActive);
+            return;
+        }
+
+        document.getElementById('stp-board').insertAdjacentHTML('beforeend', `
+            <div id="stp-draft-overlay">
+                <div class="stp-draft-title"><span class="stp-draft-title-text">${_('Relic Draft')}</span></div>
+                <div class="stp-draft-remaining">${_('Remaining:')} <span id="stp-draft-remaining-n">${center}</span></div>
+                <div class="stp-draft-chest-wrap">
+                    <div class="stp-chest stp-draft-chest" id="stp-draft-chest">
+                        <div class="stp-draft-relics" id="stp-draft-chest-relics"></div>
+                    </div>
+                </div>
+            </div>
+        `);
+        this.draftTokens = [];
+        this.draftTimers = [];
+
+        // тёмный фон → заголовок по центру → 1 с пауза → заголовок наверх, ларец
+        requestAnimationFrame(() => document.getElementById('stp-draft-overlay').classList.add('stp-open'));
+        this.draftTimers.push(setTimeout(() => {
+            if (!document.getElementById('stp-draft-overlay')) return;
+            document.getElementById('stp-draft-overlay').classList.add('stp-placed');
+            this.renderDraftChestRelics(center);
+            this.mountDraftControls(center, isCurrentPlayerActive);
+        }, 1700));
+    }
+
+    syncDraftOverlay(center, isCurrentPlayerActive) {
+        const n = document.getElementById('stp-draft-remaining-n');
+        if (n) n.textContent = String(center);
+        this.renderDraftChestRelics(center);
+        this.mountDraftControls(center, isCurrentPlayerActive);
+    }
+
+    closeDraftOverlay() {
+        (this.draftTimers ?? []).forEach(clearTimeout);
+        this.draftTimers = [];
+        const overlay = document.getElementById('stp-draft-overlay');
+        if (!overlay) return;
+        overlay.classList.remove('stp-open');
+        setTimeout(() => overlay.remove(), 400);
+        this.draftTokens = [];
+    }
+
+    renderDraftChestRelics(count) {
+        const box = document.getElementById('stp-draft-chest-relics');
+        if (!box) return;
+        this.draftTokens = this.draftTokens ?? [];
+        while (this.draftTokens.length < count) {
+            const token = document.createElement('div');
+            token.className = 'stp-elt stp-elt-relic stp-draft-relic';
+            token.style.left = `${32 + Math.random() * 39}%`;
+            token.style.top = `${54 + Math.random() * 22}%`;
+            token.style.setProperty('--rot', `${Math.round(Math.random() * 40 - 20)}deg`);
+            box.appendChild(token);
+            this.draftTokens.push(token);
+        }
+        while (this.draftTokens.length > count) {
+            const token = this.draftTokens.pop();
+            token.classList.add('stp-out');
+            setTimeout(() => token.remove(), 400);
+        }
+    }
+
+    mountDraftControls(center, isCurrentPlayerActive) {
+        document.getElementById('stp-draft-controls')?.remove();
+        if (!isCurrentPlayerActive) return;
+        document.getElementById('stp-draft-chest').insertAdjacentHTML('beforeend', `
+            <div class="stp-draft-controls" id="stp-draft-controls">
+                <div class="stp-take-stepper">
+                    <button class="stp-step-btn" id="stp-step-down" type="button">−</button>
+                    <span class="stp-step-value" id="stp-step-value">1</span>
+                    <button class="stp-step-btn" id="stp-step-up" type="button">+</button>
+                </div>
+                <button class="bgabutton bgabutton_blue" id="stp-take-relics" type="button">${_('Take')}</button>
+                <button class="bgabutton bgabutton_gray" id="stp-pass-relics" type="button">${_('Pass')}</button>
+            </div>
+        `);
+        const valueEl = document.getElementById('stp-step-value');
+        const sync = () => {
+            const v = parseInt(valueEl.textContent, 10);
+            document.getElementById('stp-step-down').disabled = v <= 1;
+            document.getElementById('stp-step-up').disabled = v >= center;
+        };
+        const step = (delta) => {
+            valueEl.textContent = String(Math.min(Math.max(1, parseInt(valueEl.textContent, 10) + delta), center));
+            sync();
+        };
+        document.getElementById('stp-step-down').addEventListener('click', () => step(-1));
+        document.getElementById('stp-step-up').addEventListener('click', () => step(1));
+        document.getElementById('stp-take-relics').addEventListener('click', () =>
+            this.bga.actions.performAction('actTakeRelics', { count: parseInt(valueEl.textContent, 10) }));
+        document.getElementById('stp-pass-relics').addEventListener('click', () =>
+            this.bga.actions.performAction('actPassRelics'));
+        sync();
+    }
+
+    // -------------------------------------------------------------------------
     // Уведомления
     // -------------------------------------------------------------------------
 
@@ -373,6 +468,9 @@ export class Game {
     notif_relicsTaken(args) {
         this.renderCenterRelics(parseInt(args.center, 10));
         this.updatePlayerRelics(parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
+        const n = document.getElementById('stp-draft-remaining-n');
+        if (n) n.textContent = String(parseInt(args.center, 10));
+        this.renderDraftChestRelics(parseInt(args.center, 10));
     }
 
     notif_relicsPassed(args) { /* лог в журнале */ }

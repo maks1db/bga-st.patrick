@@ -13,6 +13,7 @@
 /* --- Общая раскладка --------------------------------------------------- */
 
 #stp-board {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -95,12 +96,139 @@
     width: 100%;
 }
 
-.stp-relic-input {
-    width: 64px;
-    padding: 6px;
-    margin-right: 6px;
-    border: 1px solid #888;
-    border-radius: 4px;
+/* --- Оверлей разбора реликвий ------------------------------------------- */
+
+#stp-draft-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background: #060503f2;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    overflow: hidden auto;
+}
+
+#stp-draft-overlay.stp-open { opacity: 1; }
+
+.stp-draft-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: top 0.7s ease, transform 0.7s ease;
+    pointer-events: none;
+}
+
+.stp-draft-title-text {
+    display: inline-block;
+    font-size: clamp(24px, 5vw, 38px);
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #e9c766;
+    text-shadow: 0 2px 12px #000000, 0 0 24px #c9a22766;
+    white-space: nowrap;
+    animation: stp-draft-title-in 0.7s ease-out both;
+}
+
+@keyframes stp-draft-title-in {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#stp-draft-overlay.stp-placed .stp-draft-title {
+    top: 8%;
+    transform: translate(-50%, 0);
+}
+
+.stp-draft-remaining {
+    margin-top: clamp(52px, 13vh, 90px);
+    font-size: 20px;
+    color: #dddddd;
+    opacity: 0;
+    transition: opacity 0.5s ease 0.3s;
+}
+
+#stp-draft-overlay.stp-placed .stp-draft-remaining { opacity: 1; }
+
+.stp-draft-chest-wrap {
+    margin-top: 12px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
+}
+
+#stp-draft-overlay.stp-placed .stp-draft-chest-wrap {
+    opacity: 1;
+    transform: none;
+}
+
+.stp-draft-chest {
+    width: min(340px, 92vw);
+    height: auto;
+    aspect-ratio: 1 / 1;
+}
+
+.stp-draft-relics {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.stp-draft-relic {
+    width: 9.5%;
+    height: 9.5%;
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+    filter: drop-shadow(0 1px 2px #000000aa);
+    transition: opacity 0.4s ease;
+}
+
+.stp-draft-relic.stp-out { opacity: 0; }
+
+.stp-draft-controls {
+    position: absolute;
+    top: 27%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.stp-take-stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 24px;
+    background: #000000b3;
+}
+
+.stp-step-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: #c9a227;
+    color: #221a05;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.stp-step-btn:disabled { opacity: 0.4; cursor: default; }
+
+.stp-step-value {
+    min-width: 34px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffffff;
 }
 
 /* --- Элементы: img/elements.png (спрайт 4 ячейки по 192×192) ------------- */
