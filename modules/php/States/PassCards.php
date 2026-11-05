@@ -32,8 +32,13 @@ class PassCards extends GameState
         return ['count' => (int)$this->bga->globals->get('pass_count')];
     }
 
+    /**
+     * Игрок завершил выбор. Переход в ResolvePasses произойдёт только когда
+     * setPlayerNonMultiactive деактивирует последнего активного игрока —
+     * возврат состояния из экшена перевёл бы весь стол немедленно [H12].
+     */
     #[PossibleAction]
-    public function actPassCards(#[IntArrayParam] array $cardIds, int $currentPlayerId, array $args): string
+    public function actPassCards(#[IntArrayParam] array $cardIds, int $currentPlayerId, array $args)
     {
         $count = (int)$args['count'];
         $cardIds = array_map('intval', $cardIds);
@@ -55,10 +60,10 @@ class PassCards extends GameState
             'count' => $count,
         ]);
 
-        return ResolvePasses::class;
+        $this->gamestate->setPlayerNonMultiactive($currentPlayerId, ResolvePasses::class);
     }
 
-    public function zombie(int $playerId): string
+    public function zombie(int $playerId)
     {
         $count = (int)$this->bga->globals->get('pass_count');
         $hand = $this->game->getHand($playerId);
@@ -69,6 +74,6 @@ class PassCards extends GameState
             $chosen[] = $ids[$idx];
             array_splice($ids, $idx, 1);
         }
-        return $this->actPassCards($chosen, $playerId, ['count' => $count]);
+        $this->actPassCards($chosen, $playerId, ['count' => $count]);
     }
 }
