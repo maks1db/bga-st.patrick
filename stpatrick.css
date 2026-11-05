@@ -151,7 +151,7 @@
 .stp-card-value {
     position: absolute;
     bottom: 4px;
-    right: 6px;
+    left: 6px;
     font-size: 22px;
     font-weight: bold;
     line-height: 1;
@@ -181,7 +181,7 @@
 
 .stp-card-patrick {
     position: absolute;
-    bottom: 26px;
+    bottom: 30px;
     left: 6px;
     font-size: 18px;
     color: #c9a227;
