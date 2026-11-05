@@ -189,13 +189,27 @@
 
 .stp-draft-relic.stp-out { opacity: 0; }
 
+.stp-draft-controls-slot {
+    width: min(420px, 92vw);
+    margin-top: 16px;
+}
+
 .stp-draft-controls {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 10px;
-    margin: 16px 0 2px;
+    column-gap: 16px;
+    row-gap: 10px;
+}
+
+.stp-draft-controls .bgabutton {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 96px;
+    min-height: 42px;
+    font-size: 16px;
+    padding: 8px 14px;
 }
 
 .stp-take-stepper {
@@ -228,13 +242,6 @@
     font-size: 22px;
     font-weight: bold;
     color: #ffffff;
-}
-
-.stp-draft-controls .bgabutton {
-    min-width: 72px;
-    min-height: 42px;
-    font-size: 16px;
-    padding: 8px 14px;
 }
 
 /* --- Элементы: img/elements.png (спрайт 4 ячейки по 192×192) ------------- */
