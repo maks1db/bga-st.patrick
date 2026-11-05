@@ -232,6 +232,13 @@
     color: #ffffff;
 }
 
+.stp-draft-controls .bgabutton {
+    min-width: 72px;
+    min-height: 42px;
+    font-size: 16px;
+    padding: 8px 14px;
+}
+
 /* --- Элементы: img/elements.png (спрайт 4 ячейки по 192×192) ------------- */
 
 .stp-elt {
