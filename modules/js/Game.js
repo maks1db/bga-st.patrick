@@ -28,6 +28,10 @@ function cardBites(card) {
     return 0;
 }
 
+function sortHand(cards) {
+    return [...cards].sort((a, b) => a.suit - b.suit || a.value - b.value);
+}
+
 /**
  * Раунды 2+: единственный игрок с минимумом HP выбирает 0/1/2.
  */
@@ -172,7 +176,7 @@ export class Game {
 
     setup(gamedatas) {
         this.gamedatas = gamedatas;
-        this.myHand = gamedatas.hand.map(c => this.normalizeCard(c));
+        this.myHand = sortHand(gamedatas.hand.map(c => this.normalizeCard(c)));
         this.currentTrick = gamedatas.trick.map(c => this.normalizeCard(c));
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
@@ -332,7 +336,7 @@ export class Game {
     // -------------------------------------------------------------------------
 
     async notif_newHand(args) {
-        const hand = args.hand.map(c => this.normalizeCard(c));
+        const hand = sortHand(args.hand.map(c => this.normalizeCard(c)));
         const oldIds = this.myHand.map(c => c.id).sort().join(',');
         const newIds = hand.map(c => c.id).sort().join(',');
         if (oldIds === newIds) return; // та же рука (первая раздача отражена в setup)
