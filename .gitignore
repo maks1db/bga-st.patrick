@@ -3,4 +3,4 @@ bga_initial_code_template/
 __pycache__/
 
 *.pdf
-img/*
+img/main-sprite.png
