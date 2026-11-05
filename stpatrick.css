@@ -118,6 +118,16 @@
 .stp-elt-cutesnake { background-position: 66.6667% 0; }
 .stp-elt-relic { background-position: 100% 0; }
 
+/* Ларец с реликвиями: img/phase-1.png (600×600) */
+.stp-chest {
+    width: 200px;
+    height: 200px;
+    background-image: url('img/phase-1.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
 /* --- Карты ------------------------------------------------------------- */
 
 .stp-card {
