@@ -99,9 +99,9 @@
 /* --- Оверлей разбора реликвий ------------------------------------------- */
 
 #stp-draft-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    z-index: 90;
+    z-index: 950;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -145,7 +145,7 @@
 }
 
 .stp-draft-remaining {
-    margin-top: clamp(52px, 13vh, 90px);
+    margin-top: clamp(60px, 14vh, 110px);
     font-size: 20px;
     color: #dddddd;
     opacity: 0;
@@ -166,8 +166,8 @@
     transform: none;
 }
 
-.stp-draft-chest {
-    width: min(340px, 92vw);
+.stp-chest.stp-draft-chest {
+    width: min(560px, 92vw, 72vh);
     height: auto;
     aspect-ratio: 1 / 1;
 }
@@ -179,8 +179,8 @@
 }
 
 .stp-draft-relic {
-    width: 9.5%;
-    height: 9.5%;
+    width: 7.5%;
+    height: 7.5%;
     transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
     filter: drop-shadow(0 1px 2px #000000aa);
     transition: opacity 0.4s ease;
@@ -248,6 +248,7 @@
 
 /* Ларец с реликвиями: img/phase-1.png (600×600) */
 .stp-chest {
+    position: relative;
     width: 200px;
     height: 200px;
     background-image: url('img/phase-1.png');
