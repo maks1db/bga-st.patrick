@@ -106,7 +106,7 @@
     flex-direction: column;
     align-items: center;
     padding: 12px;
-    background: #060503f2;
+    background: #060503;
     opacity: 0;
     transition: opacity 0.4s ease;
     overflow: hidden auto;
