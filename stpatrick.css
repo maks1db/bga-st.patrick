@@ -179,6 +179,7 @@
 }
 
 .stp-draft-relic {
+    position: absolute;
     width: 7.5%;
     height: 7.5%;
     transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
