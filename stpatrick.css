@@ -101,11 +101,13 @@
 }
 
 /* --- Оверлей разбора реликвий ------------------------------------------- */
+/* Покрывает только игровое поле (#stp-board), а не весь экран. */
 
 #stp-draft-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     z-index: 950;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -129,12 +131,14 @@
 
 .stp-draft-title-text {
     display: inline-block;
-    font-size: clamp(24px, 5vw, 38px);
+    font-size: clamp(22px, 6vw, 36px);
     font-weight: bold;
     letter-spacing: 1px;
     color: #e9c766;
     text-shadow: 0 2px 12px #000000, 0 0 24px #c9a22766;
-    white-space: nowrap;
+    text-align: center;
+    line-height: 1.15;
+    max-width: 94vw;
     animation: stp-draft-title-in 0.7s ease-out both;
 }
 
@@ -144,13 +148,13 @@
 }
 
 #stp-draft-overlay.stp-placed .stp-draft-title {
-    top: 8%;
+    top: 12px;
     transform: translate(-50%, 0);
 }
 
 .stp-draft-remaining {
-    margin-top: clamp(60px, 14vh, 110px);
-    font-size: 20px;
+    margin-top: clamp(50px, 9vh, 76px);
+    font-size: clamp(16px, 4.5vw, 20px);
     color: #dddddd;
     opacity: 0;
     transition: opacity 0.5s ease 0.3s;
@@ -171,7 +175,7 @@
 }
 
 .stp-chest.stp-draft-chest {
-    width: min(560px, 92vw, 72vh);
+    width: min(560px, 94%);
     height: auto;
     aspect-ratio: 1 / 1;
 }
@@ -194,7 +198,7 @@
 .stp-draft-relic.stp-out { opacity: 0; }
 
 .stp-draft-controls-slot {
-    width: min(420px, 92vw);
+    width: min(420px, 100%);
     margin-top: 16px;
 }
 
@@ -246,6 +250,15 @@
     font-size: 22px;
     font-weight: bold;
     color: #ffffff;
+}
+
+/* Компактный режим на низких экранах (мобильный landscape) */
+@media (max-height: 540px) {
+    .stp-draft-title-text { font-size: 20px; }
+    #stp-draft-overlay.stp-placed .stp-draft-title { top: 6px; }
+    .stp-draft-remaining { margin-top: 32px; font-size: 15px; }
+    .stp-draft-controls .bgabutton { min-height: 38px; font-size: 15px; }
+    .stp-step-btn { width: 38px; height: 38px; font-size: 22px; }
 }
 
 /* --- Элементы: img/elements.png (спрайт 4 ячейки по 192×192) ------------- */
