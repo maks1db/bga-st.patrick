@@ -20,6 +20,12 @@ html, body, #page-content {
     background-attachment: fixed !important;
 }
 
+/* В фазе разбора реликвий фон стола — чёрный (класс ставится из openDraftOverlay) */
+html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content {
+    background-image: none !important;
+    background-color: #060503 !important;
+}
+
 #stp-board {
     position: relative;
     display: flex;
@@ -27,6 +33,13 @@ html, body, #page-content {
     align-items: center;
     gap: 12px;
     width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* Рука игрока — прижата к низу поля */
+#stp-hand {
+    margin-top: auto;
 }
 
 #stp-players {
@@ -72,29 +85,18 @@ html, body, #page-content {
     width: 100%;
 }
 
-.stp-relics {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-    min-height: 26px;
-    max-width: 520px;
-}
-
-.stp-relic-token {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #ffe9a3, #c9a227 70%, #8a6d1a);
-    border: 1px solid #8a6d1a;
-    box-shadow: 1px 1px 2px #00000055;
-}
-
+/* Область розыгрыша: белая, сильно прозрачная */
 #stp-trick {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 8px;
-    min-height: 96px;
+    min-width: 300px;
+    min-height: 165px;
+    padding: 10px;
+    background: #ffffff30;
+    border: 1px solid #ffffff55;
+    border-radius: 12px;
 }
 
 #stp-hand {
@@ -337,4 +339,17 @@ html, body, #page-content {
 .stp-card-back-logo {
     font-size: 40px;
     color: #ffffffcc;
+}
+
+/* Мобильные: карты меньше (должно совпадать с CARD_W/CARD_H в Game.js) */
+@media (max-width: 640px) {
+    .stp-card {
+        --bga-cards_card-width: 76px;
+        --bga-cards_card-height: 105px;
+        --bga-cards_card-effective-width: 76px;
+        --bga-cards_card-effective-height: 105px;
+    }
+    .stp-card-front {
+        background-size: 684px 420px; /* 9×76 × 4×105 */
+    }
 }

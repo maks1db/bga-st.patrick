@@ -17,6 +17,9 @@ const SUIT_KEYS = { 1: 'Clover', 2: 'Cross', 3: 'Harp', 4: 'Snake' };
 const SUIT_CLOVER = 1, SUIT_CROSS = 2, SUIT_HARP = 3, SUIT_SNAKE = 4;
 // ряд масти в img/main-sprite.png (ячейка 136×188, порядок колонок — значение 1–9)
 const SUIT_SPRITE_ROW = { [SUIT_CLOVER]: 0, [SUIT_HARP]: 1, [SUIT_SNAKE]: 2, [SUIT_CROSS]: 3 };
+// Размер карт: на узких экранах — уменьшенный. Дублируется media query в stpatrick.css!
+const CARD_W = window.innerWidth < 640 ? 76 : 102;
+const CARD_H = window.innerWidth < 640 ? 105 : 141;
 
 function suitName(suit) {
     return _(SUIT_KEYS[suit]);
@@ -139,12 +142,12 @@ export class Game {
         this.cardsManager = new BgaCards.Manager({
             animationManager: this.animationManager,
             type: 'stp-card',
-            cardWidth: 102,
-            cardHeight: 141,
+            cardWidth: CARD_W,
+            cardHeight: CARD_H,
             getId: (card) => card.id,
             setupDiv: (card, div) => {
-                div.style.width = '102px';
-                div.style.height = '141px';
+                div.style.width = CARD_W + 'px';
+                div.style.height = CARD_H + 'px';
             },
             setupFrontDiv: (card, div) => this.setupCardFront(card, div),
             setupBackDiv: (card, div) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
@@ -177,7 +180,6 @@ export class Game {
             <div id="stp-board">
                 <div id="stp-players"></div>
                 <div id="stp-center">
-                    <div id="stp-relics" class="stp-relics"></div>
                     <div id="stp-trick"></div>
                 </div>
                 <div id="stp-hand"></div>
@@ -198,8 +200,6 @@ export class Game {
                 </div>
             `);
         }
-
-        this.renderCenterRelics(parseInt(gamedatas.relicsCenter, 10));
 
         // Стоки карт
         this.handStock = new BgaCards.HandStock(this.cardsManager, document.getElementById('stp-hand'));
@@ -243,7 +243,7 @@ export class Game {
         const suit = parseInt(card.suit, 10);
         const value = parseInt(card.value, 10);
         const row = SUIT_SPRITE_ROW[suit];
-        div.style.backgroundPosition = `-${(value - 1) * 102}px -${row * 141}px`;
+        div.style.backgroundPosition = `-${(value - 1) * CARD_W}px -${row * CARD_H}px`;
         const bites = cardBites({ suit, value });
         div.title = `${suitName(suit)} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
     }
@@ -291,14 +291,6 @@ export class Game {
     // Реликвии / HP
     // -------------------------------------------------------------------------
 
-    renderCenterRelics(count) {
-        const el = document.getElementById('stp-relics');
-        el.innerHTML = '';
-        for (let i = 0; i < count; i++) {
-            el.insertAdjacentHTML('beforeend', '<div class="stp-relic-token"></div>');
-        }
-    }
-
     updatePlayerRelics(pid, count) {
         const el = document.getElementById(`stp-relics-${pid}`);
         if (el) el.textContent = `⛨ ${count}`;
@@ -325,6 +317,7 @@ export class Game {
     // -------------------------------------------------------------------------
 
     openDraftOverlay(args, isCurrentPlayerActive) {
+        document.body.classList.add('stp-draft-bg');
         const center = parseInt(args.center, 10);
         if (document.getElementById('stp-draft-overlay')) {
             // повторный вход (следующий драфтер) — интро не повторяем
@@ -365,6 +358,7 @@ export class Game {
     }
 
     closeDraftOverlay() {
+        document.body.classList.remove('stp-draft-bg');
         (this.draftTimers ?? []).forEach(clearTimeout);
         this.draftTimers = [];
         const overlay = document.getElementById('stp-draft-overlay');
@@ -459,7 +453,6 @@ export class Game {
             }
             this.updatePlayerRelics(pid, 0);
         }
-        this.renderCenterRelics(15);
     }
 
     notif_passCountDecided(args) { /* лог в журнале */ }
@@ -467,7 +460,6 @@ export class Game {
     notif_cardsPassed(args) { /* лог в журнале; карты придут через newHand */ }
 
     notif_relicsTaken(args) {
-        this.renderCenterRelics(parseInt(args.center, 10));
         this.updatePlayerRelics(parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
         const n = document.getElementById('stp-draft-remaining-n');
         if (n) n.textContent = String(parseInt(args.center, 10));
@@ -480,12 +472,9 @@ export class Game {
         for (const pid of Object.keys(args.losses)) {
             this.updatePlayerRelics(parseInt(pid, 10), 0);
         }
-        this.renderCenterRelics(15);
     }
 
-    notif_specialHunt(args) {
-        this.renderCenterRelics(0);
-    }
+    notif_specialHunt(args) { /* реликвии остаются у игроков [H5] */ }
 
     async notif_cardPlayed(args) {
         const card = this.normalizeCard(args.card);
