@@ -108,7 +108,10 @@
 
 #stp-draft-overlay {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
     z-index: 950;
     box-sizing: border-box;
     display: flex;
