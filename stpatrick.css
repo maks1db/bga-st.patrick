@@ -125,21 +125,21 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     text-align: center;
 }
 
-/* Подпись «кто сыграл» над картой в области розыгрыша */
+/* Подпись «кто сыграл» над картой в области розыгрыша —
+   текст цветом игрока (--stp-by-color), без плашки. */
 .stp-card .stp-trick-by {
     position: absolute;
     top: -24px;
     left: 50%;
     transform: translateX(-50%);
-    background: #000000b3;
-    color: #ffffff;
+    color: var(--stp-by-color, #ffffff);
     font-size: 13px;
+    font-weight: bold;
     line-height: 1.2;
-    padding: 2px 8px;
-    border-radius: 9px;
     white-space: nowrap;
     pointer-events: none;
     z-index: 5;
+    text-shadow: 0 1px 2px #000000cc, 0 0 5px #00000099;
 }
 
 #stp-hand {

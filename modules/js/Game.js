@@ -392,6 +392,7 @@ export class Game {
         const tag = document.createElement('div');
         tag.className = 'stp-trick-by';
         tag.textContent = player.name;
+        tag.style.setProperty('--stp-by-color', `#${player.color}`);
         el.appendChild(tag);
     }
 
