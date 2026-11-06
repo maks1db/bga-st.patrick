@@ -157,6 +157,7 @@ export class Game {
             setupDiv: (card, div) => {
                 div.style.width = CARD_W + 'px';
                 div.style.height = CARD_H + 'px';
+                div.querySelector('.stp-trick-by')?.remove(); // подпись не должна жить на reused-карте
             },
             setupFrontDiv: (card, div) => this.setupCardFront(card, div),
             setupBackDiv: (card, div) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
@@ -224,6 +225,10 @@ export class Game {
         this.handStock.addCards(this.myHand);
         if (this.currentTrick.length > 0) {
             this.trickStock.addCards(this.currentTrick);
+            const trickPlayers = gamedatas.trickPlayers ?? {};
+            for (const c of this.currentTrick) {
+                this.labelTrickCard(c, parseInt(trickPlayers[c.id] ?? 0, 10));
+            }
         }
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
@@ -320,6 +325,36 @@ export class Game {
                 this.updatePlayerHp(parseInt(pid, 10), current - parseInt(delta, 10));
             }
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Подписи «кто сыграл» над картами в области розыгрыша
+    // -------------------------------------------------------------------------
+
+    trickCardEl(card) {
+        try {
+            const el = this.trickStock.getCardElement?.(card);
+            if (el) return el;
+        } catch (e) { /* DOM-fallback ниже */ }
+        return document.getElementById(`card-${card.id}`)
+            ?? document.getElementById(`stp-card-${card.id}`);
+    }
+
+    labelTrickCard(card, playerId) {
+        const el = this.trickCardEl(card);
+        if (!el) return;
+        el.querySelector('.stp-trick-by')?.remove();
+        if (!playerId) return;
+        const player = this.gamedatas.players[playerId];
+        if (!player) return;
+        const tag = document.createElement('div');
+        tag.className = 'stp-trick-by';
+        tag.textContent = player.name;
+        el.appendChild(tag);
+    }
+
+    clearTrickLabels() {
+        document.querySelectorAll('.stp-trick-by').forEach(el => el.remove());
     }
 
     // -------------------------------------------------------------------------
@@ -454,6 +489,7 @@ export class Game {
             this.trickStock.removeCards([...this.currentTrick]);
             this.currentTrick = [];
         }
+        this.clearTrickLabels();
         for (const player of Object.values(this.gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             const snakes = this.snakeCards[pid] ?? [];
@@ -496,6 +532,7 @@ export class Game {
         } else {
             await this.trickStock.addCards([card]);
         }
+        this.labelTrickCard(card, parseInt(args.player_id, 10));
     }
 
     async notif_trickWon(args) {
@@ -510,6 +547,7 @@ export class Game {
             await this.trickStock.removeCards(discarded);
         }
         this.currentTrick = [];
+        this.clearTrickLabels();
     }
 
     notif_huntScored(args) {

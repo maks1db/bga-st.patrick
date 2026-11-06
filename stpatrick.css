@@ -92,11 +92,28 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     align-items: center;
     gap: 8px;
     min-width: 300px;
-    min-height: 165px;
+    min-height: 185px;
     padding: 10px;
     background: #ffffff30;
     border: 1px solid #ffffff55;
     border-radius: 12px;
+}
+
+/* Подпись «кто сыграл» над картой в области розыгрыша */
+.stp-card .stp-trick-by {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000000b3;
+    color: #ffffff;
+    font-size: 13px;
+    line-height: 1.2;
+    padding: 2px 8px;
+    border-radius: 9px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 5;
 }
 
 #stp-hand {

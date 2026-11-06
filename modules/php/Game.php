@@ -97,6 +97,26 @@ class Game extends \Bga\GameFramework\Table
         return $card->suit === self::SUIT_CLOVER && $card->value === 7;
     }
 
+    public static function suitName(int $suit): string
+    {
+        return clienttranslate([
+            self::SUIT_CLOVER => 'Clover',
+            self::SUIT_CROSS => 'Cross',
+            self::SUIT_HARP => 'Harp',
+            self::SUIT_SNAKE => 'Snake',
+        ][$suit]);
+    }
+
+    /** Описание карты для журнала: «Snake 7», «Clover 1 (St Patrick)». */
+    public static function cardLogName(Card $card): string
+    {
+        $name = self::suitName($card->suit) . ' ' . $card->value;
+        if (self::isPatrick($card)) {
+            $name .= ' (' . clienttranslate('St Patrick') . ')';
+        }
+        return $name;
+    }
+
     public function findPatrickHolder(): int
     {
         $patrick = $this->cards->getItemsByFieldNames(['suit' => self::SUIT_CLOVER, 'value' => 7])->first();
@@ -209,13 +229,16 @@ class Game extends \Bga\GameFramework\Table
         /** @var array<int, array{playerId: int, cardId: int}> $plays */
         $plays = $this->bga->globals->get('trick_plays');
         $trickCards = [];
+        $trickPlayers = [];
         foreach ($plays as $play) {
             $card = $this->cards->getItemById($play['cardId']);
             if ($card !== null) {
                 $trickCards[] = $card;
+                $trickPlayers[$card->id] = $play['playerId'];
             }
         }
         $result['trick'] = $trickCards;
+        $result['trickPlayers'] = $trickPlayers;
 
         // Приватная рука текущего игрока
         $result['hand'] = $currentPlayerId > 0 ? $this->getHand($currentPlayerId)->values() : [];
