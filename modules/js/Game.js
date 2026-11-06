@@ -107,6 +107,15 @@ class DraftRelics {
 }
 
 /**
+ * Конец игры: снять оверлей драфта, если он остался.
+ */
+class GameEnd {
+    constructor(game, bga) { this.game = game; this.bga = bga; }
+    onEnteringState() { this.game.closeDraftOverlay(); }
+    onLeavingState() { }
+}
+
+/**
  * Охота на змей: выложить карту в взятку (обязательный выход в масть).
  */
 class HuntPlay {
@@ -158,6 +167,7 @@ export class Game {
         this.bga.states.register('PassCards', new PassCards(this, bga));
         this.bga.states.register('DraftRelics', new DraftRelics(this, bga));
         this.bga.states.register('HuntPlay', new HuntPlay(this, bga));
+        this.bga.states.register('gameEnd', new GameEnd(this, bga));
 
         this.myHand = [];       // мои карты (объекты card)
         this.currentTrick = []; // карты текущей взятки
