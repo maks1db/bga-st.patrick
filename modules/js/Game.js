@@ -71,19 +71,23 @@ class PassCards {
         // идемпотентно: хуки multiactive могут дублироваться
         document.getElementById('stp-pass-confirm')?.remove();
         this.game.clearHandSelection();
+        const toId = this.game.leftNeighborId(this.bga.players.getCurrentPlayerId());
         if (isCurrentPlayerActive) {
             this.bga.statusBar.setTitle(_('${you} must select ${count} card(s) to pass to your left neighbor').replace('${count}', String(count)));
             this.game.setHandSelectable(this.game.myHand, count);
+            this.game.showPassInfo(toId, count);
             this.bga.statusBar.addActionButton(_('Pass selected cards'),
                 () => this.game.confirmPassSelection(count),
                 { id: 'stp-pass-confirm', disabled: true });
         } else {
             this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
+            this.game.showPassInfo(toId, null);
         }
     }
 
     onLeavingState(args, isCurrentPlayerActive) {
         document.getElementById('stp-pass-confirm')?.remove();
+        this.game.removePassInfo();
         this.game.clearHandSelection();
     }
 }
@@ -279,9 +283,15 @@ export class Game {
     clearHandSelection() {
         this.selectableMode = null;
         this.handStock.setSelectionMode('none');
+        document.querySelectorAll('#stp-hand .stp-selected').forEach(el => el.classList.remove('stp-selected'));
     }
 
     onHandSelectionChange(selection) {
+        // bga-cards не рисует выделение — подсвечиваем выбранные карты сами
+        for (const c of this.myHand) {
+            document.getElementById(`stp-card-${c.id}`)
+                ?.classList.toggle('stp-selected', selection.some(s => String(s.id) === String(c.id)));
+        }
         if (this.selectableMode === 'play') {
             if (selection.length > 0) {
                 const card = selection[selection.length - 1];
@@ -300,6 +310,35 @@ export class Game {
         this.bga.actions.performAction('actPassCards', {
             cardIds: selection.map(c => parseInt(c.id, 10)),
         });
+    }
+
+    // Сосед слева = следующий по часовой (как leftNeighbor на сервере [H9]).
+    leftNeighborId(pid) {
+        const nos = Object.values(this.gamedatas.players)
+            .map(p => ({ id: parseInt(p.id, 10), no: this.bga.players.getPlayerNoById(parseInt(p.id, 10)) }))
+            .filter(p => p.no !== null)
+            .sort((a, b) => a.no - b.no);
+        if (!nos.length) return null;
+        const idx = nos.findIndex(p => p.id === pid);
+        if (idx < 0) return null;
+        return nos[(idx + 1) % nos.length].id;
+    }
+
+    // Баннер в центре поля: кому уйдут переданные карты.
+    showPassInfo(toId, count) {
+        this.removePassInfo();
+        const to = this.gamedatas.players[toId];
+        const box = document.getElementById('stp-center');
+        if (!to || !box) return;
+        const name = `<b style="color:#${to.color}">${to.name}</b>`;
+        const text = count === null || count === undefined
+            ? _('Cards will be passed to your left neighbor: ${name}').replace('${name}', name)
+            : _('You pass ${count} card(s) to ${name}').replace('${count}', String(count)).replace('${name}', name);
+        box.insertAdjacentHTML('afterbegin', `<div id="stp-pass-info" class="stp-pass-info">${text}</div>`);
+    }
+
+    removePassInfo() {
+        document.getElementById('stp-pass-info')?.remove();
     }
 
     // -------------------------------------------------------------------------

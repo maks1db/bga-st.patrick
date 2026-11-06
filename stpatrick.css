@@ -99,6 +99,25 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     border-radius: 12px;
 }
 
+/* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур
+   (outline — чтобы не было сдвига вёрстки веера). */
+.stp-card.stp-selected {
+    background: transparent;
+    outline: 2px dashed #4CAF50;
+    outline-offset: -3px;
+    box-shadow: 0 0 10px #4CAF5080;
+}
+
+/* Баннер передачи карт в центре поля */
+.stp-pass-info {
+    font-size: 18px;
+    color: #2b2b2b;
+    background: #ffffffb3;
+    border-radius: 10px;
+    padding: 6px 16px;
+    text-align: center;
+}
+
 /* Подпись «кто сыграл» над картой в области розыгрыша */
 .stp-card .stp-trick-by {
     position: absolute;
