@@ -73,8 +73,28 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 }
 
 .stp-snakes {
+    display: flex;
+    align-items: flex-start;
     margin-top: 4px;
-    min-height: 40px;
+    min-height: 0;
+    height: 148px; /* высота карты; ширина зоны — по содержимому (стопка) */
+}
+
+/* Зоны змей: стопка с перекрытием, видна только левая полоса с номиналом.
+   DOM-порядок = сортировка (масть, номинал), z-index выставляет JS:
+   ранние (в сортировке) карты лежат поверх поздних. */
+.stp-snakes .bga-cards_card {
+    position: relative;
+    flex: 0 0 auto;
+    margin-right: -80px;
+}
+
+.stp-snakes .bga-cards_card:hover {
+    z-index: 100 !important;
+}
+
+@media (max-width: 640px) {
+    .stp-snakes .bga-cards_card { margin-right: -54px; }
 }
 
 #stp-center {
@@ -331,6 +351,12 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 .stp-elt-snake { background-position: 33.3333% 0; }
 .stp-elt-cutesnake { background-position: 66.6667% 0; }
 .stp-elt-relic { background-position: 100% 0; }
+
+/* Маленькие иконки для счётчиков в зонах игроков */
+.stp-elt-sm {
+    width: 18px;
+    height: 18px;
+}
 
 /* Ларец с реликвиями: img/phase-1.png (600×600) */
 .stp-chest {

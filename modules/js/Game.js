@@ -208,8 +208,9 @@ export class Game {
                 <div class="stp-player-zone" id="stp-zone-${pid}">
                     <div class="stp-player-head">
                         <span class="stp-player-name" style="color:#${player.color}">${player.name}</span>
-                        <span class="stp-hp" id="stp-hp-${pid}" title="${_('Life points')}">❤ ${parseInt(player.score, 10)}</span>
-                        <span class="stp-relic-count" id="stp-relics-${pid}" title="${_('Relics')}">⛨ ${parseInt(gamedatas.relics[pid] ?? 0, 10)}</span>
+                        <span class="stp-hp" title="${_('Life points')}"><span class="stp-elt stp-elt-heart stp-elt-sm"></span> <span id="stp-hp-${pid}">${parseInt(player.score, 10)}</span></span>
+                        <span class="stp-relic-count" title="${_('Relics')}"><span class="stp-elt stp-elt-relic stp-elt-sm"></span> <span id="stp-relics-${pid}">${parseInt(gamedatas.relics[pid] ?? 0, 10)}</span></span>
+                        <span class="stp-bites" id="stp-bites-${pid}" title="${_('Snake bites')}" style="display:none"><span class="stp-elt stp-elt-snake stp-elt-sm"></span> <span id="stp-bites-n-${pid}">0</span></span>
                     </div>
                     <div class="stp-snakes" id="stp-snakes-${pid}"></div>
                 </div>
@@ -241,6 +242,7 @@ export class Game {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
                 this.snakeStocks[pid].addCards(this.snakeCards[pid]);
+                setTimeout(() => this.layoutSnakeZone(pid), 600); // после отрисовки стока
             }
         }
 
@@ -350,12 +352,12 @@ export class Game {
 
     updatePlayerRelics(pid, count) {
         const el = document.getElementById(`stp-relics-${pid}`);
-        if (el) el.textContent = `⛨ ${count}`;
+        if (el) el.textContent = String(count);
     }
 
     updatePlayerHp(pid, score) {
         const el = document.getElementById(`stp-hp-${pid}`);
-        if (el) el.textContent = `❤ ${score}`;
+        if (el) el.textContent = String(score);
     }
 
     adjustAllHp(deltas) {
@@ -367,6 +369,34 @@ export class Game {
                 this.updatePlayerHp(parseInt(pid, 10), current - parseInt(delta, 10));
             }
         }
+    }
+
+    // Суммарные укусы змей игрока (иконка змеи + число, скрыто при 0).
+    updateBites(pid) {
+        const total = (this.snakeCards[pid] ?? []).reduce((sum, c) => sum + cardBites(c), 0);
+        const box = document.getElementById(`stp-bites-${pid}`);
+        const n = document.getElementById(`stp-bites-n-${pid}`);
+        if (!box || !n) return;
+        n.textContent = String(total);
+        box.style.display = total > 0 ? '' : 'none';
+    }
+
+    // Зона змей: сортировка (масть, номинал), стопка — поздние под ранними.
+    layoutSnakeZone(pid) {
+        const zone = this.snakeCards[pid] ?? [];
+        zone.sort((a, b) => a.suit - b.suit || a.value - b.value);
+        const container = document.getElementById(`stp-snakes-${pid}`);
+        if (container) {
+            for (const c of zone) {
+                const el = document.getElementById(`stp-card-${c.id}`);
+                if (el && el.parentElement === container) container.appendChild(el);
+            }
+            const total = zone.length;
+            zone.forEach((c, i) => {
+                document.getElementById(`stp-card-${c.id}`)?.style.setProperty('z-index', String(total - i));
+            });
+        }
+        this.updateBites(pid);
     }
 
     // -------------------------------------------------------------------------
@@ -541,6 +571,7 @@ export class Game {
                 this.snakeCards[pid] = [];
             }
             this.updatePlayerRelics(pid, 0);
+            this.updateBites(pid);
         }
     }
 
@@ -591,6 +622,7 @@ export class Game {
         }
         this.currentTrick = [];
         this.clearTrickLabels();
+        this.layoutSnakeZone(winnerId);
     }
 
     notif_huntScored(args) {
