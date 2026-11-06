@@ -11,12 +11,13 @@
  */
 
 /* --- Общая раскладка --------------------------------------------------- */
-/* Фон игрового поля — весь game area, класс .stp-game-area ставится из JS (setup) */
+/* Фон стола: перекрываем стандартный фон BGA на html/body/#page-content. */
 
-.stp-game-area {
-    background-image: url('img/background.jpg');
-    background-size: cover;
-    background-position: center;
+html, body, #page-content {
+    background-image: url('img/background.jpg') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
 }
 
 #stp-board {

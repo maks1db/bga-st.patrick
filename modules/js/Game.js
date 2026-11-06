@@ -173,7 +173,6 @@ export class Game {
         }
 
         const area = this.bga.gameArea.getElement();
-        area.classList.add('stp-game-area'); // фон игрового поля — весь game area
         area.insertAdjacentHTML('beforeend', `
             <div id="stp-board">
                 <div id="stp-players"></div>
