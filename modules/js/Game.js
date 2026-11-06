@@ -218,6 +218,9 @@ export class Game {
 
         // Стоки карт
         this.handStock = new BgaCards.HandStock(this.cardsManager, document.getElementById('stp-hand'));
+        if (window.innerWidth < 640) {
+            this.handStock.minOverlap = 64; // 12 карт должны влезть в узкий экран
+        }
         this.handStock.onSelectionChange = (selection) => this.onHandSelectionChange(selection);
         this.trickStock = new BgaCards.LineStock(this.cardsManager, document.getElementById('stp-trick'));
         this.snakeStocks = {};
