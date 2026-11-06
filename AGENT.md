@@ -31,8 +31,9 @@ BGA-адаптация «Охота на змей» (St Patrick, Matagot 2023, B
 
 ## Проверка на живом столе
 
-- Стол: `/tableview?table=N`; вид игрока: `/1/stpatrick?table=N`,
-  соседние сидения: `&testuser=2422983` / `=2422984`.
+- Веб-студия: **домен `studio.boardgamearena.com` без `1.`** — `1.studio...`
+  это SFTP-хост, а не сайт. Стол: `/table?table=N` (= `/tableview?table=N`);
+  прямой вид игры: `/1/stpatrick?table=N`, соседние сидения: `&testuser=2422983` / `=2422984`.
 - Доступ к клиенту из консоли top-окна:
   `document.querySelector('iframe').contentWindow.gameui.GameModule`
   (там `myHand`, `currentTrick`, `bga.actions.performAction(...)`).
