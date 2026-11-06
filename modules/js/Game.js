@@ -139,12 +139,12 @@ export class Game {
         this.cardsManager = new BgaCards.Manager({
             animationManager: this.animationManager,
             type: 'stp-card',
-            cardWidth: 68,
-            cardHeight: 94,
+            cardWidth: 102,
+            cardHeight: 141,
             getId: (card) => card.id,
             setupDiv: (card, div) => {
-                div.style.width = '68px';
-                div.style.height = '94px';
+                div.style.width = '102px';
+                div.style.height = '141px';
             },
             setupFrontDiv: (card, div) => this.setupCardFront(card, div),
             setupBackDiv: (card, div) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
@@ -243,7 +243,7 @@ export class Game {
         const suit = parseInt(card.suit, 10);
         const value = parseInt(card.value, 10);
         const row = SUIT_SPRITE_ROW[suit];
-        div.style.backgroundPosition = `-${(value - 1) * 68}px -${row * 94}px`;
+        div.style.backgroundPosition = `-${(value - 1) * 102}px -${row * 141}px`;
         const bites = cardBites({ suit, value });
         div.title = `${suitName(suit)} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
     }

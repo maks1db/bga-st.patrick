@@ -290,13 +290,13 @@
 /* --- Карты ------------------------------------------------------------- */
 
 .stp-card {
-    --bga-cards_card-width: 68px;
-    --bga-cards_card-height: 94px;
-    --bga-cards_card-effective-width: 68px;
-    --bga-cards_card-effective-height: 94px;
-    width: 68px;
-    height: 94px;
-    border-radius: 6px;
+    --bga-cards_card-width: 102px;
+    --bga-cards_card-height: 141px;
+    --bga-cards_card-effective-width: 102px;
+    --bga-cards_card-effective-height: 141px;
+    width: 102px;
+    height: 141px;
+    border-radius: 8px;
     border: 1px solid #33333388;
     background: #f8f8f8;
     position: relative;
@@ -307,9 +307,9 @@
 .stp-card-front {
     width: 100%;
     height: 100%;
-    border-radius: 6px;
+    border-radius: 8px;
     background-image: url('img/main-sprite.png');
-    background-size: 612px 376px; /* 9×68 × 4×94 — ячейка 136×188 спрайта ужата вдвое */
+    background-size: 918px 564px; /* 9×102 × 4×141 — ячейка 136×188 спрайта ужата до 75% */
     background-position: 0 0;
 }
 
@@ -317,13 +317,13 @@
     width: 100%;
     height: 100%;
     background: repeating-linear-gradient(45deg, #1d5c33, #1d5c33 6px, #164a28 6px, #164a28 12px);
-    border-radius: 6px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .stp-card-back-logo {
-    font-size: 28px;
+    font-size: 40px;
     color: #ffffffcc;
 }
