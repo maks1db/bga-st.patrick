@@ -11,6 +11,13 @@
  */
 
 /* --- Общая раскладка --------------------------------------------------- */
+/* Фон игрового поля — весь game area, класс .stp-game-area ставится из JS (setup) */
+
+.stp-game-area {
+    background-image: url('img/background.jpg');
+    background-size: cover;
+    background-position: center;
+}
 
 #stp-board {
     position: relative;
@@ -19,10 +26,6 @@
     align-items: center;
     gap: 12px;
     width: 100%;
-    background-image: url('img/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
 }
 
 #stp-players {
@@ -163,6 +166,9 @@
 #stp-draft-overlay.stp-placed .stp-draft-remaining { opacity: 1; }
 
 .stp-draft-chest-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
     margin-top: 12px;
     opacity: 0;
     transform: translateY(16px);
@@ -198,7 +204,8 @@
 .stp-draft-relic.stp-out { opacity: 0; }
 
 .stp-draft-controls-slot {
-    width: min(420px, 100%);
+    width: 100%;
+    max-width: 420px;
     margin-top: 16px;
 }
 
