@@ -18,8 +18,8 @@ const SUIT_CLOVER = 1, SUIT_CROSS = 2, SUIT_HARP = 3, SUIT_SNAKE = 4;
 // ряд масти в img/main-sprite.png (ячейка 136×188, порядок колонок — значение 1–9)
 const SUIT_SPRITE_ROW = { [SUIT_CLOVER]: 0, [SUIT_HARP]: 1, [SUIT_SNAKE]: 2, [SUIT_CROSS]: 3 };
 // Размер карт: на узких экранах — уменьшенный. Дублируется media query в stpatrick.css!
-const CARD_W = window.innerWidth < 640 ? 64 : 102;
-const CARD_H = window.innerWidth < 640 ? 88 : 141;
+const CARD_W = window.innerWidth < 640 ? 72 : 102;
+const CARD_H = window.innerWidth < 640 ? 99 : 141;
 
 function suitName(suit) {
     return _(SUIT_KEYS[suit]);
