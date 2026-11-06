@@ -414,13 +414,17 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
    effective-* — шаг веера руки; fixed-фон ломается на мобильных. */
 @media (max-width: 640px) {
     .stp-card {
-        --bga-cards_card-width: 76px;
-        --bga-cards_card-height: 105px;
-        --bga-cards_card-effective-width: 76px;
-        --bga-cards_card-effective-height: 105px;
+        --bga-cards_card-width: 64px;
+        --bga-cards_card-height: 88px;
+        --bga-cards_card-effective-width: 64px;
+        --bga-cards_card-effective-height: 88px;
     }
     .stp-card-front {
-        background-size: 684px 420px; /* 9×76 × 4×105 */
+        background-size: 576px 352px; /* 9×64 × 4×88 */
+    }
+    /* подъём наведённой карты поверх веера — клик по полной ширине */
+    #stp-hand .bga-cards_card:hover {
+        z-index: 70 !important;
     }
     html, body, #page-content {
         background-attachment: scroll !important;
