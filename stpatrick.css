@@ -416,8 +416,8 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     .stp-card {
         --bga-cards_card-width: 76px;
         --bga-cards_card-height: 105px;
-        --bga-cards_card-effective-width: 40px;
-        --bga-cards_card-effective-height: 90px;
+        --bga-cards_card-effective-width: 76px;
+        --bga-cards_card-effective-height: 105px;
     }
     .stp-card-front {
         background-size: 684px 420px; /* 9×76 × 4×105 */
