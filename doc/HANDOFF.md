@@ -174,8 +174,7 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
     (проверка элиминации); комментарий в EndScore переформулирован
     (HAL грепает и комментарии). `getAllDatas` SELECT не флагается
     (стандартный паттерн). Инструмент для перепроверки: Dry run build.
-22. **Метаданные игры заполнены** (07.11, Game Metadata Manager,
-    `controlpanelgames?game=stpatrick`): Metadata — designer/artist/
+22. **Метаданные игры заполнены** (07.11, Game Metadata Manager,    `controlpanelgames?game=stpatrick`): Metadata — designer/artist/
     год 2021/возраст 10+ (auto-fill BGG), Complexity 1, Luck 4,
     Strategy 2, Diplomacy 1, Zombie Mode 1, описание EN (~140 слов);
     Tags — Casual games, Cards, Trick-taking, Animals; Media —
@@ -188,6 +187,11 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
     файл назначается скриптом DataTransfer (base64 в up-*.js через
     evaluate_script sourcePath — mcp upload_file не работает с этой
     формой) → Submit.
+23. **Анимация передачи карт** (08.11, `d2b8fe5`, проверено на 999757):
+    `syncPassZone()` перенесён ДО `passStock.addCards(fromStock)` — пока
+    контейнер `#stp-pass-cards` был `display:none`, анимация не видела
+    цели и летела в (0,0). Траектория после фикса: прямая из руки в
+    игровую зону.
 
 ## Текущая точка: зона передачи проверена вживую (999157), дальше — план из раздела ниже
 
