@@ -338,6 +338,7 @@ export class Game {
         for (const c of cards) {
             document.getElementById(`stp-card-${c.id}`)?.classList.remove('stp-selected');
         }
+        this.syncPassZone(); // зона видима ДО анимации: иначе цель display:none и карта летит в (0,0)
         await this.passStock.addCards(cards, { fromStock: this.handStock });
         this.showWaitingPass(this.leftNeighborId(this.bga.players.getCurrentPlayerId()));
         const p = this.bga.actions.performAction('actPassCards', { cardIds: cards.map(c => c.id) });
