@@ -165,7 +165,6 @@ export class Game {
             setupDiv: (card, div) => {
                 div.style.width = CARD_W + 'px';
                 div.style.height = CARD_H + 'px';
-                div.classList.toggle('stp-bites', cardBites(card) > 0); // зубастые — метка для игровой зоны
                 div.classList.remove('stp-selected'); // выделение не должно жить на reused-карте
                 div.querySelector('.stp-trick-by')?.remove(); // подпись не должна жить на reused-карте
             },
@@ -252,8 +251,7 @@ export class Game {
                 this.labelTrickCard(c, parseInt(trickPlayers[c.id] ?? 0, 10));
             }
         }
-        // после reload: карты вставляются асинхронно — пиннинг откладываем (как layoutSnakeZone)
-        setTimeout(() => this.layoutBiteCards(document.getElementById('stp-trick')), 600);
+        // (пиннг зубастых влево убран — карты взятки всегда центрируются flex'ом)
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
@@ -388,24 +386,6 @@ export class Game {
             trick.insertAdjacentHTML('afterend',
                 `<button class="bgabutton bgabutton_gray" id="stp-pass-cancel" type="button">${_('Cancel')}</button>`);
             document.getElementById('stp-pass-cancel').addEventListener('click', () => this.cancelPass());
-        }
-    }
-
-    // Зубастые карты, выложенные в взятку, — первыми слева, с отступом от края;
-    // обычные карты при этом сдвигаются вправо.
-    layoutBiteCards(container) {
-        if (!container) return;
-        const els = [...container.children].filter(el => el.classList?.contains('bga-cards_card'));
-        const bites = els.filter(el => el.classList.contains('stp-bites'));
-        const rest = els.filter(el => !el.classList.contains('stp-bites'));
-        for (const el of els) { el.style.marginLeft = ''; el.style.marginRight = ''; }
-        if (!bites.length) return;
-        [...bites, ...rest].forEach(el => container.appendChild(el));
-        bites[0].style.marginLeft = '12px'; // небольшой отступ от левого края
-        if (rest.length) {
-            rest[0].style.marginLeft = 'auto'; // свободное место — между зубастыми и обычными
-        } else {
-            bites[bites.length - 1].style.marginRight = 'auto'; // одни зубастые — группа влево
         }
     }
 
@@ -752,7 +732,6 @@ export class Game {
             await this.trickStock.addCards([card]);
         }
         this.labelTrickCard(card, parseInt(args.player_id, 10));
-        this.layoutBiteCards(document.getElementById('stp-trick'));
     }
 
     async notif_trickWon(args) {
