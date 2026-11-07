@@ -26,8 +26,10 @@ function suitName(suit) {
 }
 
 function cardBites(card) {
-    if (card.suit === SUIT_SNAKE) return 1;
-    if (card.value === 7 && (card.suit === SUIT_CROSS || card.suit === SUIT_HARP)) return 3;
+    const suit = parseInt(card.suit, 10);
+    const value = parseInt(card.value, 10);
+    if (suit === SUIT_SNAKE) return 1;
+    if (value === 7 && (suit === SUIT_CROSS || suit === SUIT_HARP)) return 3;
     return 0;
 }
 
@@ -163,6 +165,7 @@ export class Game {
             setupDiv: (card, div) => {
                 div.style.width = CARD_W + 'px';
                 div.style.height = CARD_H + 'px';
+                div.classList.toggle('stp-bites', cardBites(card) > 0); // зубастые — метка для игровой зоны
                 div.classList.remove('stp-selected'); // выделение не должно жить на reused-карте
                 div.querySelector('.stp-trick-by')?.remove(); // подпись не должна жить на reused-карте
             },
@@ -200,10 +203,9 @@ export class Game {
             <div id="stp-board">
                 <div id="stp-players"></div>
                 <div id="stp-center">
-                    <div id="stp-pass-zone">
+                    <div id="stp-trick">
                         <div id="stp-pass-cards"></div>
                     </div>
-                    <div id="stp-trick"></div>
                 </div>
                 <div id="stp-hand"></div>
             </div>
@@ -250,6 +252,8 @@ export class Game {
                 this.labelTrickCard(c, parseInt(trickPlayers[c.id] ?? 0, 10));
             }
         }
+        // после reload: карты вставляются асинхронно — пиннинг откладываем (как layoutSnakeZone)
+        setTimeout(() => this.layoutBiteCards(document.getElementById('stp-trick')), 600);
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
@@ -279,7 +283,9 @@ export class Game {
         const suit = parseInt(card.suit, 10);
         const value = parseInt(card.value, 10);
         const row = SUIT_SPRITE_ROW[suit];
-        div.style.backgroundPosition = `-${(value - 1) * CARD_W}px -${row * CARD_H}px`;
+        // Позиция ячейки — через CSS-переменные (см. .stp-card-front)
+        div.style.setProperty('--bp-x', `${(value - 1) * CARD_W}px`);
+        div.style.setProperty('--bp-y', `${row * CARD_H}px`);
         const bites = cardBites({ suit, value });
         div.title = `${suitName(suit)} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
     }
@@ -368,17 +374,37 @@ export class Game {
         this.syncPassZone();
     }
 
-    // Зона передачи: видна, только когда есть подтверждённые карты; под ними — отмена.
+    // Зона передачи: карты лежат в основной игровой зоне (#stp-trick), кнопка
+    // отмены — под ней. Видна, только когда есть подтверждённые карты.
     syncPassZone() {
-        const zone = document.getElementById('stp-pass-zone');
-        if (!zone) return;
+        const box = document.getElementById('stp-pass-cards');
+        const trick = document.getElementById('stp-trick');
+        if (!box || !trick) return;
         const has = (this.passCards ?? []).length > 0;
-        zone.classList.toggle('stp-visible', has);
+        box.classList.toggle('stp-visible', has);
         document.getElementById('stp-pass-cancel')?.remove();
         if (has) {
-            document.getElementById('stp-pass-cards').insertAdjacentHTML('afterend',
+            trick.insertAdjacentHTML('afterend',
                 `<button class="bgabutton bgabutton_gray" id="stp-pass-cancel" type="button">${_('Cancel')}</button>`);
             document.getElementById('stp-pass-cancel').addEventListener('click', () => this.cancelPass());
+        }
+    }
+
+    // Зубастые карты, выложенные в взятку, — первыми слева, с отступом от края;
+    // обычные карты при этом сдвигаются вправо.
+    layoutBiteCards(container) {
+        if (!container) return;
+        const els = [...container.children].filter(el => el.classList?.contains('bga-cards_card'));
+        const bites = els.filter(el => el.classList.contains('stp-bites'));
+        const rest = els.filter(el => !el.classList.contains('stp-bites'));
+        for (const el of els) { el.style.marginLeft = ''; el.style.marginRight = ''; }
+        if (!bites.length) return;
+        [...bites, ...rest].forEach(el => container.appendChild(el));
+        bites[0].style.marginLeft = '12px'; // небольшой отступ от левого края
+        if (rest.length) {
+            rest[0].style.marginLeft = 'auto'; // свободное место — между зубастыми и обычными
+        } else {
+            bites[bites.length - 1].style.marginRight = 'auto'; // одни зубастые — группа влево
         }
     }
 
@@ -712,6 +738,7 @@ export class Game {
             await this.trickStock.addCards([card]);
         }
         this.labelTrickCard(card, parseInt(args.player_id, 10));
+        this.layoutBiteCards(document.getElementById('stp-trick'));
     }
 
     async notif_trickWon(args) {
