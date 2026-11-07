@@ -502,21 +502,34 @@ export class Game {
         box.style.display = total > 0 ? '' : 'none';
     }
 
-    // Зона змей: сортировка (масть, номинал), стопка — поздние под ранними.
+    // Зона змей: сортировка (масть, номинал), ряды по 6 карт; новые ряды
+    // перекрывают предыдущие (CSS: margin-top отрицательный), внутри ряда
+    // ранние карты лежат поверх поздних (видна левая полоса с номиналом).
     layoutSnakeZone(pid) {
-        const zone = this.snakeCards[pid] ?? [];
-        zone.sort((a, b) => a.suit - b.suit || a.value - b.value);
+        const zone = (this.snakeCards[pid] ?? []).slice().sort((a, b) => a.suit - b.suit || a.value - b.value);
         const container = document.getElementById(`stp-snakes-${pid}`);
-        if (container) {
-            for (const c of zone) {
-                const el = document.getElementById(`stp-card-${c.id}`);
-                if (el && el.parentElement === container) container.appendChild(el);
-            }
-            const total = zone.length;
-            zone.forEach((c, i) => {
-                document.getElementById(`stp-card-${c.id}`)?.style.setProperty('z-index', String(total - i));
-            });
+        if (!container) { this.updateBites(pid); return; }
+        const alive = new Set(zone.map(c => `stp-card-${c.id}`));
+        for (const el of container.querySelectorAll('.bga-cards_card')) {
+            if (!alive.has(el.id)) el.remove(); // карта уже ушла из зоны
         }
+        const els = new Map();
+        for (const el of container.querySelectorAll('.bga-cards_card')) els.set(el.id, el);
+        container.querySelectorAll(':scope > .stp-snake-row').forEach(row => row.remove());
+        const ROW = 6;
+        for (let i = 0; i < zone.length; i += ROW) {
+            const row = document.createElement('div');
+            row.className = 'stp-snake-row';
+            row.style.zIndex = String(Math.floor(i / ROW) + 1); // новые ряды поверх старых
+            for (const c of zone.slice(i, i + ROW)) {
+                const el = els.get(`stp-card-${c.id}`);
+                if (el) row.appendChild(el);
+            }
+            container.appendChild(row);
+        }
+        zone.forEach((c, i) => {
+            document.getElementById(`stp-card-${c.id}`)?.style.setProperty('z-index', String(zone.length - i));
+        });
         this.updateBites(pid);
     }
 

@@ -72,29 +72,46 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     font-weight: bold;
 }
 
-.stp-snakes {
+/* Специфичность .stp-snakes.card-stock выше библиотечного .line-stock
+   (bga-cards задаёт flex-direction: row на контейнер стока). */
+.stp-snakes.card-stock {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
     margin-top: 4px;
     min-height: 0;
-    height: 148px; /* высота карты; ширина зоны — по содержимому (стопка) */
 }
 
-/* Зоны змей: стопка с перекрытием, видна только левая полоса с номиналом.
-   DOM-порядок = сортировка (масть, номинал), z-index выставляет JS:
-   ранние (в сортировке) карты лежат поверх поздних. */
-.stp-snakes .bga-cards_card {
+/* Ряды змей: до 6 карт в ряду. Новый ряд перекрывает предыдущий,
+   оставляя видимой его верхнюю полосу (~35px) с номиналом.
+   Внутри ряда — горизонтальная стопка: видна левая полоса карты
+   (номинал). DOM-порядок = сортировка (масть, номинал), z-index
+   внутри ряда выставляет JS: ранние лежат поверх поздних. */
+.stp-snake-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    height: 143px; /* высота карты с рамкой — ряд не растягивается от перекрытий */
+}
+
+.stp-snake-row + .stp-snake-row {
+    margin-top: -108px; /* перекрытие рядов: виден верх предыдущего с номиналом */
+}
+
+.stp-snake-row .bga-cards_card {
     position: relative;
     flex: 0 0 auto;
     margin-right: -80px;
 }
 
-.stp-snakes .bga-cards_card:hover {
+.stp-snake-row .bga-cards_card:hover {
     z-index: 100 !important;
 }
 
 @media (max-width: 640px) {
-    .stp-snakes .bga-cards_card { margin-right: -54px; }
+    .stp-snake-row { height: 101px; }
+    .stp-snake-row + .stp-snake-row { margin-top: -76px; }
+    .stp-snake-row .bga-cards_card { margin-right: -54px; }
 }
 
 #stp-center {
