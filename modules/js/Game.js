@@ -56,7 +56,10 @@ class DecidePassCount {
 }
 
 /**
- * Одновременная передача карт соседу слева.
+ * Одновременная передача карт соседу слева. Игроки остаются framework-active
+ * до раскрытия (сервер следит за глобалом pass_done) — поэтому отмена
+ * возможна через обычное действие, а хук активации не срабатывает
+ * при подтверждении: клиент сам переключает UI в режим ожидания.
  */
 class PassCards {
     constructor(game, bga) { this.game = game; this.bga = bga; }
@@ -67,26 +70,19 @@ class PassCards {
     }
 
     onPlayerActivationChange(args, isCurrentPlayerActive) {
-        const count = parseInt(args.count, 10);
         // идемпотентно: хуки multiactive могут дублироваться
         document.getElementById('stp-pass-confirm')?.remove();
         this.game.clearHandSelection();
+        const count = parseInt(args.count, 10);
         const toId = this.game.leftNeighborId(this.bga.players.getCurrentPlayerId());
-        if (isCurrentPlayerActive) {
-            this.game.restorePassedCards(); // отмена: карты возвращаются из зоны передачи в руку
-            this.bga.statusBar.setTitle(_('${you} must select ${count} card(s) to pass to your left neighbor').replace('${count}', String(count)));
-            this.game.setHandSelectable(this.game.myHand, count);
-            this.game.showPassInfo(toId, count);
-            this.bga.statusBar.addActionButton(_('Pass selected cards'),
-                () => this.game.confirmPassSelection(count),
-                { id: 'stp-pass-confirm', disabled: true });
-        } else if ((this.game.passCards ?? []).length > 0) {
-            this.bga.statusBar.setTitle(_('You passed ${count} card(s) — waiting for the other players').replace('${count}', String(this.game.passCards.length)));
-            this.game.showPassInfo(toId, null);
-            this.game.syncPassZone();
-        } else {
+        if (!isCurrentPlayerActive) {
             this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
             this.game.showPassInfo(toId, null);
+        } else if ((this.game.passCards ?? []).length > 0) {
+            this.game.showWaitingPass(toId); // уже подтвердил (reload) — ждём раскрытия
+        } else {
+            this.game.restorePassedCards(); // отмена: карты возвращаются из зоны передачи в руку
+            this.game.showPassSelection(count, toId);
         }
     }
 
@@ -337,17 +333,39 @@ export class Game {
             document.getElementById(`stp-card-${c.id}`)?.classList.remove('stp-selected');
         }
         await this.passStock.addCards(cards, { fromStock: this.handStock });
-        this.syncPassZone();
+        this.showWaitingPass(this.leftNeighborId(this.bga.players.getCurrentPlayerId()));
+        const p = this.bga.actions.performAction('actPassCards', { cardIds: cards.map(c => c.id) });
+        if (!p) { // вызов заблокирован фреймворком — откатываем перенос
+            await this.restorePassedCards();
+            this.showPassSelection(count, this.leftNeighborId(this.bga.players.getCurrentPlayerId()));
+            return;
+        }
         try {
-            await this.bga.actions.performAction('actPassCards', { cardIds: cards.map(c => c.id) });
+            await p;
         } catch (e) {
-            // сервер отклонил: пока мы в PassCards — возвращаем карты, иначе зона просто сбрасывается
+            await this.restorePassedCards();
             if (this.bga.states.getCurrentMainStateName() === 'PassCards') {
-                await this.restorePassedCards();
-            } else {
-                this.discardPassZone();
+                this.showPassSelection(count, this.leftNeighborId(this.bga.players.getCurrentPlayerId()));
             }
         }
+    }
+
+    // Режим выбора карт для передачи (активный игрок).
+    showPassSelection(count, toId) {
+        this.bga.statusBar.setTitle(_('${you} must select ${count} card(s) to pass to your left neighbor').replace('${count}', String(count)));
+        this.setHandSelectable(this.myHand, count);
+        this.showPassInfo(toId, count);
+        document.getElementById('stp-pass-confirm')?.remove();
+        this.bga.statusBar.addActionButton(_('Pass selected cards'),
+            () => this.confirmPassSelection(count),
+            { id: 'stp-pass-confirm', disabled: true });
+    }
+
+    // Режим ожидания раскрытия: карты в зоне передачи, под ними — отмена.
+    showWaitingPass(toId) {
+        this.bga.statusBar.setTitle(_('You passed ${count} card(s) — waiting for the other players').replace('${count}', String(this.passCards.length)));
+        this.showPassInfo(toId, null);
+        this.syncPassZone();
     }
 
     // Зона передачи: видна, только когда есть подтверждённые карты; под ними — отмена.
@@ -366,7 +384,9 @@ export class Game {
 
     cancelPass() {
         document.getElementById('stp-pass-cancel')?.remove(); // анти-двойной клик
-        this.bga.actions.performAction('actCancelPassCards').catch(() => this.syncPassZone());
+        const p = this.bga.actions.performAction('actCancelPassCards');
+        if (!p) { this.syncPassZone(); return; } // вызов заблокирован фреймворком — кнопку вернём
+        p.catch(() => this.syncPassZone());
     }
 
     // Отмена подтверждения: карты возвращаются из зоны передачи в руку (идемпотентно).
@@ -657,7 +677,11 @@ export class Game {
 
     async notif_passCancelled(args) {
         if (parseInt(args.player_id, 10) !== parseInt(this.bga.players.getCurrentPlayerId(), 10)) return;
-        await this.restorePassedCards(); // реактивация вызовет хук, повторный вызов — no-op
+        await this.restorePassedCards();
+        if (this.bga.states.getCurrentMainStateName() === 'PassCards') {
+            const count = parseInt((this.bga.states.getCurrentMainStateClass()?.args ?? {}).count, 10);
+            this.showPassSelection(count, this.leftNeighborId(this.bga.players.getCurrentPlayerId()));
+        }
     }
 
     notif_relicsTaken(args) {

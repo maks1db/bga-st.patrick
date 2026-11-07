@@ -33,9 +33,9 @@ class PassCards extends GameState
     }
 
     /**
-     * Игрок завершил выбор. Переход в ResolvePasses произойдёт только когда
-     * setPlayerNonMultiactive деактивирует последнего активного игрока —
-     * возврат состояния из экшена перевёл бы весь стол немедленно [H12].
+     * Игрок завершил выбор. Игроки остаются framework-active до раскрытия —
+     * это позволяет отменить передачу (actCancelPassCards). Переход в
+     * ResolvePasses происходит, когда pass_done покрывает всех игроков.
      */
     #[PossibleAction]
     public function actPassCards(#[IntArrayParam] array $cardIds, int $currentPlayerId, array $args)
@@ -45,6 +45,10 @@ class PassCards extends GameState
         if (count($cardIds) !== $count || count(array_unique($cardIds)) !== $count) {
             throw new UserException(clienttranslate('Wrong number of cards'));
         }
+        $done = $this->bga->globals->get('pass_done');
+        if (in_array($currentPlayerId, $done, true)) {
+            throw new UserException(clienttranslate('You have already passed cards'));
+        }
         $hand = $this->game->getHand($currentPlayerId);
         foreach ($cardIds as $cardId) {
             if (!$hand->has($cardId)) {
@@ -53,6 +57,8 @@ class PassCards extends GameState
         }
         $recipient = $this->game->leftNeighbor($currentPlayerId);
         $this->game->cards->moveItems($cardIds, ['passed', $recipient]);
+        $done[] = $currentPlayerId;
+        $this->bga->globals->set('pass_done', $done);
 
         $this->notify->all('cardsPassed', clienttranslate('${player_name} passed ${count} card(s)'), [
             'player_id' => $currentPlayerId,
@@ -60,34 +66,40 @@ class PassCards extends GameState
             'count' => $count,
         ]);
 
-        $this->gamestate->setPlayerNonMultiactive($currentPlayerId, ResolvePasses::class);
+        if (count($done) >= count($this->game->playerIds())) {
+            $this->gamestate->setAllPlayersNonMultiactive(ResolvePasses::class);
+        }
     }
 
     /**
-     * Отмена подтверждённой передачи: карты возвращаются в руку,
-     * игрок снова активен (выбор происходит до раскрытия [H12]).
+     * Отмена подтверждённой передачи до раскрытия: карты возвращаются в руку,
+     * игрок исключается из pass_done и выбирает заново [H12].
      */
     #[PossibleAction]
     public function actCancelPassCards(int $currentPlayerId)
     {
-        $recipient = $this->game->leftNeighbor($currentPlayerId);
-        $passed = $this->game->cards->getItemsInLocation(['passed', $recipient]);
-        if ($passed->isEmpty()) {
+        $done = $this->bga->globals->get('pass_done');
+        if (!in_array($currentPlayerId, $done, true)) {
             throw new UserException(clienttranslate('You have no passed cards to take back'));
         }
+        $recipient = $this->game->leftNeighbor($currentPlayerId);
+        $passed = $this->game->cards->getItemsInLocation(['passed', $recipient]);
         $this->game->cards->moveItems($passed, ['hand', $currentPlayerId]);
+        $this->bga->globals->set('pass_done', array_values(array_diff($done, [$currentPlayerId])));
 
         $this->notify->all('passCancelled', clienttranslate('${player_name} takes back the passed card(s)'), [
             'player_id' => $currentPlayerId,
             'player_name' => $this->game->getPlayerNameById($currentPlayerId),
         ]);
-
-        $this->gamestate->setPlayersMultiactive([$currentPlayerId], ResolvePasses::class);
     }
 
     public function zombie(int $playerId)
     {
         $count = (int)$this->bga->globals->get('pass_count');
+        $done = $this->bga->globals->get('pass_done');
+        if (in_array($playerId, $done, true)) {
+            return; // карты уже переданы
+        }
         $hand = $this->game->getHand($playerId);
         $ids = array_map('intval', array_keys($hand->all()));
         $chosen = [];

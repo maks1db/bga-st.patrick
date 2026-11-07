@@ -41,6 +41,7 @@ class NewRound extends GameState
         $this->bga->globals->set('special_hunt', false);
         $this->bga->globals->set('trick_plays', []);
         $this->bga->globals->set('passed_players', []);
+        $this->bga->globals->set('pass_done', []);
 
         $this->notify->all('newRound', clienttranslate('Round ${round} begins'), ['round' => $round]);
 

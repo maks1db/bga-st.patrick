@@ -301,6 +301,7 @@ class Game extends \Bga\GameFramework\Table
         $this->bga->globals->set('special_hunt', false);
         $this->bga->globals->set('trick_plays', []);
         $this->bga->globals->set('passed_players', []);
+        $this->bga->globals->set('pass_done', []);
 
         $this->activeNextPlayer();
 
