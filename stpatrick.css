@@ -72,9 +72,9 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     font-weight: bold;
 }
 
-/* Специфичность .stp-snakes.card-stock выше библиотечного .line-stock
-   (bga-cards задаёт flex-direction: row на контейнер стока). */
-.stp-snakes.card-stock {
+/* Специфичность с ID выше библиотечных правил bga-cards (.line-stock),
+   которые JS вставляет в конец head и которые иначе выигрывают по порядку. */
+#stp-board .stp-snakes.card-stock {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
