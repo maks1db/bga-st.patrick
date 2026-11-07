@@ -243,6 +243,11 @@ class Game extends \Bga\GameFramework\Table
         // Приватная рука текущего игрока
         $result['hand'] = $currentPlayerId > 0 ? $this->getHand($currentPlayerId)->values() : [];
 
+        // Приватные карты текущего игрока, ожидающие передачи ([passed, левый сосед])
+        $result['passed'] = $currentPlayerId > 0
+            ? $this->cards->getItemsInLocation(['passed', $this->leftNeighbor($currentPlayerId)])->values()
+            : [];
+
         $result['round'] = (int)$this->bga->globals->get('round');
         $result['specialHunt'] = (bool)$this->bga->globals->get('special_hunt');
 

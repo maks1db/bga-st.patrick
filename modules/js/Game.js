@@ -73,12 +73,17 @@ class PassCards {
         this.game.clearHandSelection();
         const toId = this.game.leftNeighborId(this.bga.players.getCurrentPlayerId());
         if (isCurrentPlayerActive) {
+            this.game.restorePassedCards(); // отмена: карты возвращаются из зоны передачи в руку
             this.bga.statusBar.setTitle(_('${you} must select ${count} card(s) to pass to your left neighbor').replace('${count}', String(count)));
             this.game.setHandSelectable(this.game.myHand, count);
             this.game.showPassInfo(toId, count);
             this.bga.statusBar.addActionButton(_('Pass selected cards'),
                 () => this.game.confirmPassSelection(count),
                 { id: 'stp-pass-confirm', disabled: true });
+        } else if ((this.game.passCards ?? []).length > 0) {
+            this.bga.statusBar.setTitle(_('You passed ${count} card(s) — waiting for the other players').replace('${count}', String(this.game.passCards.length)));
+            this.game.showPassInfo(toId, null);
+            this.game.syncPassZone();
         } else {
             this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
             this.game.showPassInfo(toId, null);
@@ -89,6 +94,7 @@ class PassCards {
         document.getElementById('stp-pass-confirm')?.remove();
         this.game.removePassInfo();
         this.game.clearHandSelection();
+        this.game.discardPassZone(); // карты ушли получателям — зона больше не нужна
     }
 }
 
@@ -161,6 +167,7 @@ export class Game {
             setupDiv: (card, div) => {
                 div.style.width = CARD_W + 'px';
                 div.style.height = CARD_H + 'px';
+                div.classList.remove('stp-selected'); // выделение не должно жить на reused-карте
                 div.querySelector('.stp-trick-by')?.remove(); // подпись не должна жить на reused-карте
             },
             setupFrontDiv: (card, div) => this.setupCardFront(card, div),
@@ -176,6 +183,7 @@ export class Game {
 
         this.myHand = [];       // мои карты (объекты card)
         this.currentTrick = []; // карты текущей взятки
+        this.passCards = [];    // мои подтверждённые карты в зоне передачи (ждут раскрытия)
         this.snakeCards = {};   // pid => карты в открытой зоне
         this.selectableMode = null; // null | 'select' | 'play'
         this.maxSelected = 0;
@@ -185,6 +193,7 @@ export class Game {
         this.gamedatas = gamedatas;
         this.myHand = sortHand(gamedatas.hand.map(c => this.normalizeCard(c)));
         this.currentTrick = gamedatas.trick.map(c => this.normalizeCard(c));
+        this.passCards = (gamedatas.passed ?? []).map(c => this.normalizeCard(c));
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             this.snakeCards[pid] = (gamedatas.snakes[pid] ?? []).map(c => this.normalizeCard(c));
@@ -195,6 +204,9 @@ export class Game {
             <div id="stp-board">
                 <div id="stp-players"></div>
                 <div id="stp-center">
+                    <div id="stp-pass-zone">
+                        <div id="stp-pass-cards"></div>
+                    </div>
                     <div id="stp-trick"></div>
                 </div>
                 <div id="stp-hand"></div>
@@ -224,6 +236,7 @@ export class Game {
         }
         this.handStock.onSelectionChange = (selection) => this.onHandSelectionChange(selection);
         this.trickStock = new BgaCards.LineStock(this.cardsManager, document.getElementById('stp-trick'));
+        this.passStock = new BgaCards.LineStock(this.cardsManager, document.getElementById('stp-pass-cards'));
         this.snakeStocks = {};
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
@@ -231,6 +244,9 @@ export class Game {
         }
 
         this.handStock.addCards(this.myHand);
+        if (this.passCards.length > 0) {
+            this.passStock.addCards(this.passCards); // после reload: карты снова в зоне передачи
+        }
         if (this.currentTrick.length > 0) {
             this.trickStock.addCards(this.currentTrick);
             const trickPlayers = gamedatas.trickPlayers ?? {};
@@ -309,12 +325,71 @@ export class Game {
         }
     }
 
-    confirmPassSelection(count) {
+    async confirmPassSelection(count) {
         const selection = this.handStock.getSelection();
         if (selection.length !== count) return;
-        this.bga.actions.performAction('actPassCards', {
-            cardIds: selection.map(c => parseInt(c.id, 10)),
-        });
+        const cards = selection.map(c => this.normalizeCard(c));
+        document.getElementById('stp-pass-confirm')?.remove();
+        this.passCards = [...cards];
+        this.myHand = this.myHand.filter(c => !cards.some(p => p.id === c.id));
+        this.handStock.unselectAll();
+        for (const c of cards) {
+            document.getElementById(`stp-card-${c.id}`)?.classList.remove('stp-selected');
+        }
+        await this.passStock.addCards(cards, { fromStock: this.handStock });
+        this.syncPassZone();
+        try {
+            await this.bga.actions.performAction('actPassCards', { cardIds: cards.map(c => c.id) });
+        } catch (e) {
+            // сервер отклонил: пока мы в PassCards — возвращаем карты, иначе зона просто сбрасывается
+            if (this.bga.states.getCurrentMainStateName() === 'PassCards') {
+                await this.restorePassedCards();
+            } else {
+                this.discardPassZone();
+            }
+        }
+    }
+
+    // Зона передачи: видна, только когда есть подтверждённые карты; под ними — отмена.
+    syncPassZone() {
+        const zone = document.getElementById('stp-pass-zone');
+        if (!zone) return;
+        const has = (this.passCards ?? []).length > 0;
+        zone.classList.toggle('stp-visible', has);
+        document.getElementById('stp-pass-cancel')?.remove();
+        if (has) {
+            document.getElementById('stp-pass-cards').insertAdjacentHTML('afterend',
+                `<button class="bgabutton bgabutton_gray" id="stp-pass-cancel" type="button">${_('Cancel')}</button>`);
+            document.getElementById('stp-pass-cancel').addEventListener('click', () => this.cancelPass());
+        }
+    }
+
+    cancelPass() {
+        document.getElementById('stp-pass-cancel')?.remove(); // анти-двойной клик
+        this.bga.actions.performAction('actCancelPassCards').catch(() => this.syncPassZone());
+    }
+
+    // Отмена подтверждения: карты возвращаются из зоны передачи в руку (идемпотентно).
+    async restorePassedCards() {
+        const cards = this.passCards ?? [];
+        if (!cards.length || !this.passStock) { this.syncPassZone(); return; }
+        this.passCards = [];
+        this.myHand = sortHand([...this.myHand, ...cards]);
+        await this.passStock.removeCards(cards);
+        await this.handStock.addCards(cards);
+        if (this.selectableMode === 'select') {
+            this.handStock.setSelectableCards(this.myHand); // карты доехали — повторяем маркировку
+        }
+        this.syncPassZone();
+    }
+
+    // Карты ушли получателям (раскрытие) — зона очищается без возврата в руку.
+    async discardPassZone() {
+        const cards = this.passCards ?? [];
+        this.passCards = [];
+        this.syncPassZone();
+        if (!cards.length || !this.passStock) return;
+        await this.passStock.removeCards(cards);
     }
 
     // Сосед слева = следующий по часовой (как leftNeighbor на сервере [H9]).
@@ -544,6 +619,7 @@ export class Game {
     // -------------------------------------------------------------------------
 
     async notif_newHand(args) {
+        await this.discardPassZone(); // переданные карты ушли получателю
         const hand = sortHand(args.hand.map(c => this.normalizeCard(c)));
         const oldIds = this.myHand.map(c => c.id).sort().join(',');
         const newIds = hand.map(c => c.id).sort().join(',');
@@ -578,6 +654,11 @@ export class Game {
     notif_passCountDecided(args) { /* лог в журнале */ }
 
     notif_cardsPassed(args) { /* лог в журнале; карты придут через newHand */ }
+
+    async notif_passCancelled(args) {
+        if (parseInt(args.player_id, 10) !== parseInt(this.bga.players.getCurrentPlayerId(), 10)) return;
+        await this.restorePassedCards(); // реактивация вызовет хук, повторный вызов — no-op
+    }
 
     notif_relicsTaken(args) {
         this.updatePlayerRelics(parseInt(args.player_id, 10), parseInt(args.player_relics, 10));

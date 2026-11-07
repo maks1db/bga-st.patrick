@@ -145,6 +145,35 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     text-align: center;
 }
 
+/* Зона передачи: подтверждённые карты ждут раскрытия, под ними — кнопка отмены. */
+#stp-pass-zone {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #ffffff30;
+    border: 1px solid #ffffff55;
+    border-radius: 12px;
+}
+
+#stp-pass-zone.stp-visible {
+    display: flex;
+}
+
+#stp-pass-cards {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+#stp-pass-cancel {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 140px;
+}
+
 /* Подпись «кто сыграл» над картой в области розыгрыша —
    текст цветом игрока (--stp-by-color), без плашки и теней. */
 .stp-card .stp-trick-by {

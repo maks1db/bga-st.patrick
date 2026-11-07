@@ -63,6 +63,28 @@ class PassCards extends GameState
         $this->gamestate->setPlayerNonMultiactive($currentPlayerId, ResolvePasses::class);
     }
 
+    /**
+     * Отмена подтверждённой передачи: карты возвращаются в руку,
+     * игрок снова активен (выбор происходит до раскрытия [H12]).
+     */
+    #[PossibleAction]
+    public function actCancelPassCards(int $currentPlayerId)
+    {
+        $recipient = $this->game->leftNeighbor($currentPlayerId);
+        $passed = $this->game->cards->getItemsInLocation(['passed', $recipient]);
+        if ($passed->isEmpty()) {
+            throw new UserException(clienttranslate('You have no passed cards to take back'));
+        }
+        $this->game->cards->moveItems($passed, ['hand', $currentPlayerId]);
+
+        $this->notify->all('passCancelled', clienttranslate('${player_name} takes back the passed card(s)'), [
+            'player_id' => $currentPlayerId,
+            'player_name' => $this->game->getPlayerNameById($currentPlayerId),
+        ]);
+
+        $this->gamestate->setPlayersMultiactive([$currentPlayerId], ResolvePasses::class);
+    }
+
     public function zombie(int $playerId)
     {
         $count = (int)$this->bga->globals->get('pass_count');
