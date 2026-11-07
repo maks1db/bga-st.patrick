@@ -169,6 +169,20 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
     (проверка элиминации); комментарий в EndScore переформулирован
     (HAL грепает и комментарии). `getAllDatas` SELECT не флагается
     (стандартный паттерн). Инструмент для перепроверки: Dry run build.
+22. **Метаданные игры заполнены** (07.11, Game Metadata Manager,
+    `controlpanelgames?game=stpatrick`): Metadata — designer/artist/
+    год 2021/возраст 10+ (auto-fill BGG), Complexity 1, Luck 4,
+    Strategy 2, Diplomacy 1, Zombie Mode 1, описание EN (~140 слов);
+    Tags — Casual games, Cards, Trick-taking, Animals; Media —
+    загружены Box 280×280 (пейзаж) и Icon 50×50 (змея). **Banner и
+    Title НЕ загружать** (по решению пользователя — будет другая задача;
+    черновики лежали в /tmp/stp-media: banner-1386x400.jpg,
+    title-2000.jpg). Publisher images — нет логотипа. Иконка реликвии
+    50×50 сохранена вне репозитория: `../relic-icon-50x50.png`
+    (для будущей задачи). Загрузка медиа через страницу: «+» → модалка,
+    файл назначается скриптом DataTransfer (base64 в up-*.js через
+    evaluate_script sourcePath — mcp upload_file не работает с этой
+    формой) → Submit.
 
 ## Текущая точка: зона передачи проверена вживую (999157), дальше — план из раздела ниже
 
