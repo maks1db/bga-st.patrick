@@ -78,9 +78,8 @@ class ScoreHunt extends GameState
             }
         }
 
-        $players = $this->game->getCollectionFromDb("SELECT `player_id`, `player_score` FROM `player`");
-        foreach ($players as $player) {
-            if ((int)$player['player_score'] <= 0) {
+        foreach ($this->game->playerIds() as $pid) {
+            if ($this->bga->playerScore->get($pid) <= 0) {
                 return EndScore::class;
             }
         }

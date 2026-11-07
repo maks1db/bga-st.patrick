@@ -9,7 +9,7 @@ use Bga\GameFramework\States\GameState;
 use Bga\Games\StPatrick\Game;
 
 /**
- * Очки жизни уже ведутся в player_score — здесь только переход к концу игры.
+ * Очки жизни уже ведутся через счётчик BGA — здесь только переход к концу игры.
  */
 class EndScore extends GameState
 {

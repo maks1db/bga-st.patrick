@@ -195,8 +195,7 @@ class Game extends \Bga\GameFramework\Table
 
     public function getGameProgression(): int
     {
-        $players = $this->getCollectionFromDb("SELECT `player_id`, `player_score` FROM `player`");
-        $maxHp = max(array_map('intval', array_column($players, 'player_score')));
+        $maxHp = max(array_map(fn(int $pid) => $this->bga->playerScore->get($pid), $this->playerIds()));
         return max(0, min(100, 100 - 5 * $maxHp)); // 20 HP => 0, 0 HP => 100
     }
 

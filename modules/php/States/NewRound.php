@@ -58,11 +58,14 @@ class NewRound extends GameState
         }
 
         // Игрок(и) с минимумом HP определяют число передаваемых карт [H8]
-        $players = $this->game->getCollectionFromDb("SELECT `player_id`, `player_score` FROM `player`");
-        $minHp = min(...array_map(fn($p) => (int)$p['player_score'], array_values($players)));
+        $scores = [];
+        foreach ($this->game->playerIds() as $pid) {
+            $scores[$pid] = $this->bga->playerScore->get($pid);
+        }
+        $minHp = min(...array_values($scores));
         $leaders = array_map('intval', array_keys(array_filter(
-            $players,
-            fn($p) => (int)$p['player_score'] === $minHp
+            $scores,
+            fn(int $hp) => $hp === $minHp
         )));
         if (count($leaders) === 1) {
             $this->game->giveExtraTime($leaders[0]);
