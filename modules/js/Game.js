@@ -515,6 +515,50 @@ export class Game {
     }
 
     // -------------------------------------------------------------------------
+    // Итоговая таблица раунда: реликвии / урон (потерянные HP) / здоровье.
+    // Собирается из уведомлений подсчёта; HP читается из уже обновлённых
+    // счётчиков. Живёт до закрытия (×) или до таблицы следующего раунда;
+    // при reload не восстанавливается (авторитетная запись — журнал игры).
+    // -------------------------------------------------------------------------
+
+    showRoundSummary(relics, losses) {
+        document.getElementById('stp-round-summary')?.remove();
+        const center = document.getElementById('stp-center');
+        if (!center) return;
+        const rows = Object.values(this.gamedatas.players).map(p => {
+            const pid = parseInt(p.id, 10);
+            const hpEl = document.getElementById(`stp-hp-${pid}`);
+            const hp = hpEl ? parseInt(hpEl.textContent, 10) : parseInt(p.score, 10);
+            const relic = parseInt(relics[pid] ?? 0, 10);
+            const dmg = parseInt(losses[pid] ?? 0, 10);
+            return `<tr>
+                <td class="stp-rs-name" style="color:#${p.color}">${p.name}</td>
+                <td><span class="stp-elt stp-elt-relic stp-elt-sm"></span> ${relic}</td>
+                <td><span class="stp-elt stp-elt-snake stp-elt-sm"></span> ${dmg}</td>
+                <td class="${hp <= 0 ? 'stp-rs-dead' : ''}"><span class="stp-elt stp-elt-heart stp-elt-sm"></span> ${hp}</td>
+            </tr>`;
+        }).join('');
+        center.insertAdjacentHTML('afterbegin', `
+            <div id="stp-round-summary">
+                <div class="stp-rs-head">
+                    <span>${_('Round summary')}</span>
+                    <button class="stp-rs-close" id="stp-rs-close" type="button" title="${_('Close')}">×</button>
+                </div>
+                <table class="stp-rs-table">
+                    <tr>
+                        <th>${_('Player')}</th>
+                        <th><span class="stp-elt stp-elt-relic stp-elt-sm"></span> ${_('Relics')}</th>
+                        <th><span class="stp-elt stp-elt-snake stp-elt-sm"></span> ${_('Damage')}</th>
+                        <th><span class="stp-elt stp-elt-heart stp-elt-sm"></span> ${_('Health')}</th>
+                    </tr>
+                    ${rows}
+                </table>
+            </div>`);
+        document.getElementById('stp-rs-close').addEventListener('click', () =>
+            document.getElementById('stp-round-summary')?.remove());
+    }
+
+    // -------------------------------------------------------------------------
     // Подписи «кто сыграл» над картами в области розыгрыша
     // -------------------------------------------------------------------------
 
@@ -752,6 +796,7 @@ export class Game {
 
     notif_huntScored(args) {
         this.adjustAllHp(args.losses);
+        this.showRoundSummary(args.relics, args.losses);
     }
 
     notif_specialScored(args) {
@@ -763,15 +808,28 @@ export class Game {
                 this.updatePlayerHp(parseInt(pid, 10), current + parseInt(gain, 10));
             }
         }
+        // особая охота не наносит урона [H6] — колонка урона вся в нулях
+        const zeroLosses = {};
+        for (const pid of Object.keys(args.gains)) zeroLosses[pid] = 0;
+        this.showRoundSummary(args.relics, zeroLosses);
     }
 
     notif_sacrifice(args) {
         const saint = parseInt(args.player_id, 10);
         const deltas = {};
+        const losses = {};
         for (const player of Object.values(this.gamedatas.players)) {
             const pid = parseInt(player.id, 10);
+            losses[pid] = pid === saint ? 0 : 3; // SACRIFICE_PENALTY [H15]
             if (pid !== saint) deltas[pid] = 3;
         }
         this.adjustAllHp(deltas);
+        // в уведомлении нет реликвий — берём из счётчиков (клиент их ведёт)
+        const relics = {};
+        for (const player of Object.values(this.gamedatas.players)) {
+            const pid = parseInt(player.id, 10);
+            relics[pid] = parseInt(document.getElementById(`stp-relics-${pid}`)?.textContent ?? 0, 10);
+        }
+        this.showRoundSummary(relics, losses);
     }
 }
