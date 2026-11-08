@@ -188,6 +188,16 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
     файл назначается скриптом DataTransfer (base64 в up-*.js через
     evaluate_script sourcePath — mcp upload_file не работает с этой
     формой) → Submit.
+    ⚠ **Уточнение от 08.11:** наши загрузки медиа были перезаписаны
+    сторонним процессом в тот же вечер (07.11 23:34–23:38 MSK, по
+    меткам ?h= файлов) — НЕ нашими деплоями (SFTP-корень `/stpatrick/`
+    не включает data/gamemedia). Текущее состояние gamemedia: Box =
+    официальный бокс-арт Matagot, Icon = `default.png`, Title/Banner =
+    пустые. Пользователь решил (08.11): официальный Box ОСТАВИТЬ,
+    icon-default ОСТАВИТЬ — изменений не требуется. Урок: projects /
+    lobby / gamepanel / превью Metadata Manager читают ОДИН источник
+    `data/gamemedia/<game>/`; повторная загрузка медиа может снова
+    перезаписаться платформой.
 23. **Анимация передачи карт** (08.11, `d2b8fe5`, проверено на 999757):
     `syncPassZone()` перенесён ДО `passStock.addCards(fromStock)` — пока
     контейнер `#stp-pass-cards` был `display:none`, анимация не видела
