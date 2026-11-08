@@ -81,6 +81,7 @@ class PassCards {
             this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
             this.game.showPassInfo(toId, null);
         } else if ((this.game.passCards ?? []).length > 0) {
+            this.game.passAck = true; // карты из gamedatas.passed — пас уже на сервере
             this.game.showWaitingPass(toId); // уже подтвердил (reload) — ждём раскрытия
         } else {
             this.game.restorePassedCards(); // отмена: карты возвращаются из зоны передачи в руку
@@ -182,6 +183,7 @@ export class Game {
         this.myHand = [];       // мои карты (объекты card)
         this.currentTrick = []; // карты текущей взятки
         this.passCards = [];    // мои подтверждённые карты в зоне передачи (ждут раскрытия)
+        this.passAck = false;   // пас подтверждён сервером (кнопка Cancel разрешена)
         this.snakeCards = {};   // pid => карты в открытой зоне
         this.selectableMode = null; // null | 'select' | 'play'
         this.maxSelected = 0;
@@ -231,6 +233,10 @@ export class Game {
         if (window.innerWidth < 640) {
             this.handStock.minOverlap = 28; // полоса карты максимально широкая в пределах экрана
         }
+        // Веер руки всегда отсортирован (масть, номинал): с sort-функцией
+        // addCards вставляет карты в свою позицию, а не в конец (иначе
+        // возврат карт при отмене передачи ломал порядок веера).
+        this.handStock.setSort((a, b) => parseInt(a.suit, 10) - parseInt(b.suit, 10) || parseInt(a.value, 10) - parseInt(b.value, 10));
         this.handStock.onSelectionChange = (selection) => this.onHandSelectionChange(selection);
         this.trickStock = new BgaCards.LineStock(this.cardsManager, document.getElementById('stp-trick'));
         this.passStock = new BgaCards.LineStock(this.cardsManager, document.getElementById('stp-pass-cards'));
@@ -347,6 +353,8 @@ export class Game {
         }
         try {
             await p;
+            this.passAck = true; // сервер принял пас — теперь отмена легальна
+            this.syncPassZone();
         } catch (e) {
             await this.restorePassedCards();
             if (this.bga.states.getCurrentMainStateName() === 'PassCards') {
@@ -373,8 +381,10 @@ export class Game {
         this.syncPassZone();
     }
 
-    // Зона передачи: карты лежат в основной игровой зоне (#stp-trick), кнопка
-    // отмены — под ней. Видна, только когда есть подтверждённые карты.
+    // Зона передачи: карты лежат в основной игровой зоне (#stp-trick).
+    // Кнопка Cancel — только после подтверждения паса сервером: иначе
+    // отмена улетает раньше actPassCards и сервер честно отвечает ошибкой,
+    // а клик во время анимации перелёта роняет removeCards против addCards.
     syncPassZone() {
         const box = document.getElementById('stp-pass-cards');
         const trick = document.getElementById('stp-trick');
@@ -382,7 +392,7 @@ export class Game {
         const has = (this.passCards ?? []).length > 0;
         box.classList.toggle('stp-visible', has);
         document.getElementById('stp-pass-cancel')?.remove();
-        if (has) {
+        if (has && this.passAck) {
             trick.insertAdjacentHTML('afterend',
                 `<button class="bgabutton bgabutton_gray" id="stp-pass-cancel" type="button">${_('Cancel')}</button>`);
             document.getElementById('stp-pass-cancel').addEventListener('click', () => this.cancelPass());
@@ -399,6 +409,7 @@ export class Game {
     // Отмена подтверждения: карты возвращаются из зоны передачи в руку (идемпотентно).
     async restorePassedCards() {
         const cards = this.passCards ?? [];
+        this.passAck = false;
         if (!cards.length || !this.passStock) { this.syncPassZone(); return; }
         this.passCards = [];
         this.myHand = sortHand([...this.myHand, ...cards]);
@@ -414,6 +425,7 @@ export class Game {
     async discardPassZone() {
         const cards = this.passCards ?? [];
         this.passCards = [];
+        this.passAck = false;
         this.syncPassZone();
         if (!cards.length || !this.passStock) return;
         await this.passStock.removeCards(cards);
