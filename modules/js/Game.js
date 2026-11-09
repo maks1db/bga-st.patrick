@@ -291,7 +291,11 @@ export class Game {
                 if ((window.innerWidth < 640) !== breakpoints[0]
                     || (window.innerWidth < 995) !== breakpoints[1]) {
                     location.reload();
+                    return;
                 }
+                // без смены брейкпоинта: рука могла перестроить ряды —
+                // подтягиваем низ оверлея драфта
+                this.syncDraftBottom();
             }, 300);
         });
     }
@@ -664,6 +668,7 @@ export class Game {
             document.getElementById('stp-draft-overlay').classList.add('stp-placed');
             this.renderDraftChestRelics(center);
             this.mountDraftControls(center, isCurrentPlayerActive);
+            this.syncDraftBottom(); // рука могла догрузиться к моменту показа ларца
         }, 1700));
     }
 
