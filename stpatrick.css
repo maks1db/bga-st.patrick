@@ -441,8 +441,10 @@ body.stp-draft-open #stp-hand {
 .stp-chest.stp-draft-chest {
     /* --stp-draft-chest-size ставит JS (вписывает ларец в высоту оверлея);
        без неё — прежний размер. Потолок 720px (исходник 600×600 — лёгкий
-       апскейл допустим), 96% — почти в всю ширину поля на мобильном. */
-    width: min(720px, 96%, var(--stp-draft-chest-size, 100vh));
+       апскейл допустим), 96% — почти вся ширина поля на мобильном,
+       floor 300px — минимальная высота стола с ларцом (не влезает —
+       оверлей скроллится). */
+    width: max(300px, min(720px, 96%, var(--stp-draft-chest-size, 100vh)));
     height: auto;
     aspect-ratio: 1 / 1;
 }
