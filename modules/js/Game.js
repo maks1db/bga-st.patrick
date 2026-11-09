@@ -276,6 +276,24 @@ export class Game {
         }
 
         this.bga.notifications.setupPromiseNotifications();
+
+        // Размеры карт и шаг позиций фона спрайта выбираются в setup по
+        // innerWidth, а CSS media query (640px — размер карты/фона, 995px —
+        // сетка/веер) применяется живьём. Переход через брейкпоинт БЕЗ
+        // перезагрузки рассинхронизирует JS-шаг с CSS background-size —
+        // лица карт съезжаются. Лечим перезагрузкой (состояние игры
+        // фреймворк восстановит).
+        const breakpoints = [window.innerWidth < 640, window.innerWidth < 995];
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if ((window.innerWidth < 640) !== breakpoints[0]
+                    || (window.innerWidth < 995) !== breakpoints[1]) {
+                    location.reload();
+                }
+            }, 300);
+        });
     }
 
     // -------------------------------------------------------------------------
