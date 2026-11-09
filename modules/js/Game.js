@@ -20,11 +20,9 @@ const SUIT_SPRITE_ROW = { [SUIT_CLOVER]: 0, [SUIT_HARP]: 1, [SUIT_SNAKE]: 2, [SU
 // Размер карт: на узких экранах — уменьшенный. Дублируется media query в stpatrick.css!
 const CARD_W = window.innerWidth < 640 ? 72 : 102;
 const CARD_H = window.innerWidth < 640 ? 99 : 141;
-// Рука играет крупнее остальных карт при <995px (читаемость на планшете/
-// мобилке); поле и зоны змей остаются CARD_W×CARD_H. Отдельный менеджер
-// bga-cards (один размер карты на менеджер). Дублирует media query!
-const HAND_W = window.innerWidth < 995 ? 108 : 102;
-const HAND_H = window.innerWidth < 995 ? 149 : 141;
+// Рука крупнее полевых карт при <995px — zoom в media query stpatrick.css
+// (#stp-hand .stp-card). Один менеджер карт: bga-cards НЕ умеет переносить
+// элемент карты между менеджерами («not attached to any Stock»).
 
 function suitName(suit) {
     return _(SUIT_KEYS[suit]);
@@ -162,12 +160,22 @@ export class Game {
         this.animationManager = new BgaAnimations.Manager({
             animationsActive: () => this.bga.gameui.bgaAnimationsActive(),
         });
-        // Два менеджера карт: игровое поле (взятка, зоны змей, передача) —
-        // CARD_W×CARD_H; рука — крупнее при <995px (HAND_W×HAND_H).
-        // bga-cards перевызывает setupDiv при переносе карты между стоками,
-        // поэтому размер/класс/позиция спрайта исправляются автоматически.
-        this.cardsManager = this.makeCardsManager(CARD_W, CARD_H, false);
-        this.handCardsManager = this.makeCardsManager(HAND_W, HAND_H, true);
+        this.cardsManager = new BgaCards.Manager({
+            animationManager: this.animationManager,
+            type: 'stp-card',
+            cardWidth: CARD_W,
+            cardHeight: CARD_H,
+            getId: (card) => card.id,
+            setupDiv: (card, div) => {
+                div.style.width = CARD_W + 'px';
+                div.style.height = CARD_H + 'px';
+                div.classList.remove('stp-selected'); // выделение не должно жить на reused-карте
+                div.querySelector('.stp-trick-by')?.remove(); // подпись не должна жить на reused-карте
+            },
+            setupFrontDiv: (card, div) => this.setupCardFront(card, div),
+            setupBackDiv: (card, div) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
+            isCardVisible: (card) => true,
+        });
 
         this.bga.states.register('DecidePassCount', new DecidePassCount(this, bga));
         this.bga.states.register('PassCards', new PassCards(this, bga));
@@ -224,7 +232,7 @@ export class Game {
         }
 
         // Стоки карт
-        this.handStock = new BgaCards.HandStock(this.handCardsManager, document.getElementById('stp-hand'));
+        this.handStock = new BgaCards.HandStock(this.cardsManager, document.getElementById('stp-hand'));
         // Веер руки всегда отсортирован (масть, номинал): с sort-функцией
         // addCards вставляет карты в свою позицию, а не в конец (иначе
         // возврат карт при отмене передачи ломал порядок веера).
@@ -309,38 +317,14 @@ export class Game {
         };
     }
 
-    // Менеджер карт размера w×h. isHand — менеджер руки (класс
-    // stp-hand-card: CSS крупнее при <995px). Позиция ячейки спрайта
-    // задаётся здесь же (на div карты, наследуется фронтом) — setupDiv
-    // перевызывается библиотекой при каждом переносе карты между стоками.
-    makeCardsManager(w, h, isHand) {
-        return new BgaCards.Manager({
-            animationManager: this.animationManager,
-            type: 'stp-card',
-            cardWidth: w,
-            cardHeight: h,
-            getId: (card) => card.id,
-            setupDiv: (card, div) => {
-                div.style.width = w + 'px';
-                div.style.height = h + 'px';
-                div.classList.toggle('stp-hand-card', isHand);
-                div.classList.remove('stp-selected'); // выделение не должно жить на reused-карте
-                div.querySelector('.stp-trick-by')?.remove(); // подпись не должна жить на reused-карте
-                const row = SUIT_SPRITE_ROW[parseInt(card.suit, 10)];
-                const value = parseInt(card.value, 10);
-                div.style.setProperty('--bp-x', `${(value - 1) * w}px`);
-                div.style.setProperty('--bp-y', `${row * h}px`);
-            },
-            setupFrontDiv: (card, div) => this.setupCardFront(card, div),
-            setupBackDiv: (card, div) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
-            isCardVisible: (card) => true,
-        });
-    }
-
+    // Менеджер карт размера CARD_W×CARD_H (один на всё — см. константы).
     setupCardFront(card, div) {
         const suit = parseInt(card.suit, 10);
         const value = parseInt(card.value, 10);
-        // Позиция ячейки — CSS-переменные из setupDiv менеджера (на div карты)
+        const row = SUIT_SPRITE_ROW[suit];
+        // Позиция ячейки — через CSS-переменные (см. .stp-card-front)
+        div.style.setProperty('--bp-x', `${(value - 1) * CARD_W}px`);
+        div.style.setProperty('--bp-y', `${row * CARD_H}px`);
         const bites = cardBites({ suit, value });
         div.title = `${suitName(suit)} ${value}${bites > 0 ? ` — ${bites} ${_('bite(s)')}` : ''}`;
     }

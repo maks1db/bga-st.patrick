@@ -292,20 +292,13 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
         padding: 8px;
     }
 
-    /* Рука крупнее полевых карт (читаемость): 108×149 против 102×141
-       (поле и зоны змей при <640 — и того меньше, 72×99). Inline-размер
-       ставит JS (менеджер руки), фон спрайта — здесь. Специфичность
-       .stp-card.stp-hand-card выше media-правила .stp-card (72×99).
-       108 выбрано так, чтобы 6 карт с рамкой влезали в ряд шириной 736. */
-    .stp-card.stp-hand-card {
-        --bga-cards_card-width: 108px;
-        --bga-cards_card-height: 149px;
-        --bga-cards_card-effective-width: 108px;
-        --bga-cards_card-effective-height: 149px;
-    }
-
-    .stp-card.stp-hand-card .stp-card-front {
-        background-size: 972px 596px; /* 9×108 × 4×149 */
+    /* Рука крупнее полевых карт (читаемость): zoom на картах ВНУТРИ руки —
+       при переходе карты на поле/в зоны правило перестаёт matches и размер
+       возвращается автоматически. 102×141 → ~108×150. Поле и зоны змей
+       не масштабируются. Спрайт масштабируется вместе с картой — лицо
+       не сбивается. */
+    #stp-hand .stp-card {
+        zoom: 1.06;
     }
 
     #stp-hand .card-stock.hand-stock > .bga-cards_card {
@@ -615,6 +608,10 @@ body.stp-draft-open #stp-hand {
     /* подъём наведённой карты поверх веера — клик по полной ширине */
     #stp-hand .bga-cards_card:hover {
         z-index: 70 !important;
+    }
+    /* рука крупнее: 72×99 → ~108×149 (6 карт с рамкой влезают в 736) */
+    #stp-hand .stp-card {
+        zoom: 1.5;
     }
     html, body, #page-content {
         background-attachment: scroll !important;
