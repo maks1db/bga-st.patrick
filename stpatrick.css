@@ -340,7 +340,10 @@ body.stp-draft-open #stp-hand {
     top: 0;
     left: 0;
     width: 100%;
-    min-height: 100%;
+    /* Низ оверлея — по верхней кромке руки (переменную ставит JS из
+       высоты #stp-hand): ларец и управление не уходят под карты.
+       Без переменной 0px = прежнее поведение (всё поле). */
+    bottom: var(--stp-draft-bottom, 0px);
     z-index: 950;
     box-sizing: border-box;
     display: flex;

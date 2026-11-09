@@ -653,6 +653,7 @@ export class Game {
                 </div>
             </div>
         `);
+        this.syncDraftBottom();
         this.draftTokens = [];
         this.draftTimers = [];
 
@@ -671,6 +672,17 @@ export class Game {
         if (n) n.textContent = String(center);
         this.renderDraftChestRelics(center);
         this.mountDraftControls(center, isCurrentPlayerActive);
+        this.syncDraftBottom();
+    }
+
+    // Низ оверлея — по верхней кромке руки (z 960 поверх оверлея):
+    // ларец и управление не уходят под карты.
+    syncDraftBottom() {
+        const overlay = document.getElementById('stp-draft-overlay');
+        const hand = document.getElementById('stp-hand');
+        if (overlay && hand) {
+            overlay.style.setProperty('--stp-draft-bottom', hand.offsetHeight + 'px');
+        }
     }
 
     closeDraftOverlay() {
