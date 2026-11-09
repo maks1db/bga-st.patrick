@@ -685,12 +685,28 @@ export class Game {
     }
 
     // Низ оверлея — по верхней кромке руки (z 960 поверх оверлея):
-    // ларец и управление не уходят под карты.
+    // ларец и управление не уходят под карты. Веерные карты визуально вылезают
+    // за верх контейнера руки (повороты веера) — свес меряем по реальным
+    // rect'ам карт и прибавляем к низу оверлея (делим на page-zoom, т.к.
+    // offsetHeight в layout-пикселях, а rect — в визуальных).
+    // Заодно вписываем ларец в остаток высоты оверлея (--stp-draft-chest-size),
+    // иначе при поднятом низе ларец обрезался бы оверлеем (overflow: auto).
     syncDraftBottom() {
         const overlay = document.getElementById('stp-draft-overlay');
         const hand = document.getElementById('stp-hand');
-        if (overlay && hand) {
-            overlay.style.setProperty('--stp-draft-bottom', hand.offsetHeight + 'px');
+        if (!overlay || !hand) return;
+        const handRect = hand.getBoundingClientRect();
+        const zoom = hand.offsetHeight ? handRect.height / hand.offsetHeight : 1;
+        let overflow = 0;
+        hand.querySelectorAll('.stp-card').forEach(card => {
+            overflow = Math.max(overflow, handRect.top - card.getBoundingClientRect().top);
+        });
+        const bottom = hand.offsetHeight + Math.ceil(Math.max(0, overflow) / zoom);
+        overlay.style.setProperty('--stp-draft-bottom', bottom + 'px');
+        const wrap = overlay.querySelector('.stp-draft-chest-wrap');
+        if (wrap) {
+            const avail = overlay.clientHeight - wrap.offsetTop - 12; // padding-bottom оверлея
+            if (avail > 0) overlay.style.setProperty('--stp-draft-chest-size', Math.floor(avail) + 'px');
         }
     }
 

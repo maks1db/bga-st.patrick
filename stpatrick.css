@@ -425,7 +425,9 @@ body.stp-draft-open #stp-hand {
 }
 
 .stp-chest.stp-draft-chest {
-    width: min(560px, 94%);
+    /* --stp-draft-chest-size ставит JS (вписывает ларец в высоту оверлея);
+       без неё — прежний размер */
+    width: min(560px, 94%, var(--stp-draft-chest-size, 100vh));
     height: auto;
     aspect-ratio: 1 / 1;
 }
