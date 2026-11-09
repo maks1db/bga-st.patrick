@@ -673,6 +673,10 @@ export class Game {
             this.renderDraftChestRelics(center);
             this.mountDraftControls(center, isCurrentPlayerActive);
             this.syncDraftBottom(); // рука могла догрузиться к моменту показа ларца
+            // веер дозаканчивает раскладку/перелёт карт позже — досводим отступ
+            this.draftTimers.push(setTimeout(() => {
+                if (document.getElementById('stp-draft-overlay')) this.syncDraftBottom();
+            }, 1800));
         }, 1700));
     }
 
