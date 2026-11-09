@@ -615,7 +615,7 @@ export class Game {
     // -------------------------------------------------------------------------
 
     openDraftOverlay(args, isCurrentPlayerActive) {
-        document.body.classList.add('stp-draft-bg');
+        document.body.classList.add('stp-draft-bg', 'stp-draft-open');
         const center = parseInt(args.center, 10);
         if (document.getElementById('stp-draft-overlay')) {
             // повторный вход (следующий драфтер) — интро не повторяем
@@ -656,7 +656,7 @@ export class Game {
     }
 
     closeDraftOverlay() {
-        document.body.classList.remove('stp-draft-bg');
+        document.body.classList.remove('stp-draft-bg', 'stp-draft-open');
         (this.draftTimers ?? []).forEach(clearTimeout);
         this.draftTimers = [];
         const overlay = document.getElementById('stp-draft-overlay');

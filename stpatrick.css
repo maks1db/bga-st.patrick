@@ -324,6 +324,14 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     }
 }
 
+/* В фазе разбора реликвий рука показывается ПОВЕРХ чёрного оверлея: решение
+   «взять/пасовать» принимается по своим картам. Класс stp-draft-open ставит
+   openDraftOverlay (снимает closeDraftOverlay), z-index выше оверлея (950). */
+body.stp-draft-open #stp-hand {
+    position: relative;
+    z-index: 960;
+}
+
 /* --- Оверлей разбора реликвий ------------------------------------------- */
 /* Покрывает только игровое поле (#stp-board), а не весь экран. */
 
