@@ -23,8 +23,8 @@ const CARD_H = window.innerWidth < 640 ? 99 : 141;
 // Рука играет крупнее остальных карт при <995px (читаемость на планшете/
 // мобилке); поле и зоны змей остаются CARD_W×CARD_H. Отдельный менеджер
 // bga-cards (один размер карты на менеджер). Дублирует media query!
-const HAND_W = window.innerWidth < 995 ? 110 : 102;
-const HAND_H = window.innerWidth < 995 ? 152 : 141;
+const HAND_W = window.innerWidth < 995 ? 108 : 102;
+const HAND_H = window.innerWidth < 995 ? 149 : 141;
 
 function suitName(suit) {
     return _(SUIT_KEYS[suit]);
