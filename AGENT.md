@@ -64,6 +64,14 @@ BGA-адаптация «Охота на змей» (St Patrick, Matagot 2023, B
   CSS задаёт `flex-direction: row`** — собственный `flex-direction` на
   контейнере стока требует селектора с более высокой специфичностью
   (у нас: `.stp-snakes.card-stock`), иначе правило молча проигрывает.
+- **bga-cards HandStock floating — баг математики**: переменная
+  `--bga-cards_hand-stock-floating-height` = высота×0.65 (конструктор),
+  поэтому `bottom: calc(fh − h)` = −0.35×высоты: при классе `.floating`
+  рука уезжает за низ экрана, лица карт обрезаются. Патч (все
+  разрешения): `#stp-hand .card-stock.hand-stock.floating { bottom: 0 !important;
+  background: none; }`. Также библиотека создаёт ВЛОЖЕННЫЙ div стока
+  (.card-stock.hand-stock), а наш #stp-hand становится holder'ом —
+  стили руки писать на оба уровня проверяя реальный DOM.
 - **styleSheets с CDN cross-origin**: доступ к `cssRules` бросает
   SecurityError — сканирование применённых правил через CSSOM не работает;
   только `fetch` текста CSS и поиск по тексту.
