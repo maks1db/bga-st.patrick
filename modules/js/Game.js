@@ -234,11 +234,11 @@ export class Game {
         // addCards вставляет карты в свою позицию, а не в конец (иначе
         // возврат карт при отмене передачи ломал порядок веера).
         this.handStock.setSort((a, b) => parseInt(a.suit, 10) - parseInt(b.suit, 10) || parseInt(a.value, 10) - parseInt(b.value, 10));
-        // ≤1024px (планшет/мобилка): рука — сетка, а не веер. Карты стоят
+        // <995px (планшет/мобилка): рука — сетка, а не веер. Карты стоят
         // ровно (без поворотов и перекрытий) и переносятся на строку ниже
         // (flex-wrap в media query stpatrick.css — breakpoint дублируется!).
         // Веерные механики библиотеки отключаем; floating-класс глушится CSS.
-        this.handGridMode = window.innerWidth <= 1024;
+        this.handGridMode = window.innerWidth < 995;
         if (this.handGridMode) {
             this.handStock.fanShaped = false;
             this.handStock.updateCardPositions = () => {};

@@ -272,13 +272,13 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     width: 100%;
 }
 
-/* Рука в сетке (≤1024px, планшет/мобилка): карты стоят вертикально ровно —
+/* Рука в сетке (<995px, планшет/мобилка): карты стоят вертикально ровно —
    без поворотов и перекрытий веера, зазор удобен для пальца, не поместившиеся
    карты переносятся на строку ниже. Режим включает handGridMode в setup
    (modules/js/Game.js) — breakpoint дублируется, менять в обоих местах!
    NB: библиотека превращает #stp-hand в holder и создаёт внутренний div
    стока (.card-stock.hand-stock) — сеточные правила именно для него. */
-@media (max-width: 1024px) {
+@media (max-width: 994px) {
     #stp-hand {
         height: auto !important; /* библиотека фиксирует высоту веера */
     }
