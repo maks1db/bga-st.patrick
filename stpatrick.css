@@ -291,13 +291,17 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
         padding: 8px;
     }
 
-    /* floating-класс вешается IntersectionObserver'ом библиотеки — глушим
-       его эффект: в сетке рука живёт в потоке доски, а не прибита к экрану */
-    #stp-hand .card-stock.hand-stock.floating {
-        position: static;
-        left: auto;
-        right: auto;
-        bottom: auto;
+    /* Рука всегда видна игроку: прибита к низу экрана. Селекторы с ID —
+       библиотечный CSS в конце head иначе побеждает равную специфичность;
+       .floating (класс вешается observer'ом библиотеки) обрабатывается тем
+       же правилом: его позиционирование должно совпадать в любом состоянии. */
+    #stp-hand .card-stock.hand-stock.floating,
+    #stp-hand .card-stock.hand-stock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 200;
         background: none;
     }
 
