@@ -272,6 +272,35 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     width: 100%;
 }
 
+/* Рука в сетке (≤1024px, планшет/мобилка): карты стоят вертикально ровно —
+   без поворотов и перекрытий веера, зазор удобен для пальца, не поместившиеся
+   карты переносятся на строку ниже. Режим включает handGridMode в setup
+   (modules/js/Game.js) — breakpoint дублируется, менять в обоих местах! */
+@media (max-width: 1024px) {
+    #stp-hand {
+        flex-wrap: wrap;
+        gap: 16px;
+        height: auto !important; /* библиотека фиксирует высоту веера */
+        align-content: flex-start;
+        padding: 8px;
+    }
+
+    /* floating-класс вешается IntersectionObserver'ом библиотеки — глушим
+       его эффект: в сетке рука живёт в потоке доски, а не прибита к экрану */
+    #stp-hand.card-stock.hand-stock.floating {
+        position: static;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        background: none;
+    }
+
+    #stp-hand .bga-cards_card {
+        margin-left: 0 !important; /* библиотечное перекрытие веера */
+        transform: none !important;
+    }
+}
+
 /* --- Оверлей разбора реликвий ------------------------------------------- */
 /* Покрывает только игровое поле (#stp-board), а не весь экран. */
 
