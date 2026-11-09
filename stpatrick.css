@@ -292,6 +292,21 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
         padding: 8px;
     }
 
+    /* Рука крупнее полевых карт (читаемость): 110×152 против 102×141
+       (поле и зоны змей при <640 — и того меньше, 72×99). Inline-размер
+       ставит JS (менеджер руки), фон спрайта — здесь. Специфичность
+       .stp-card.stp-hand-card выше media-правила .stp-card (72×99). */
+    .stp-card.stp-hand-card {
+        --bga-cards_card-width: 110px;
+        --bga-cards_card-height: 152px;
+        --bga-cards_card-effective-width: 110px;
+        --bga-cards_card-effective-height: 152px;
+    }
+
+    .stp-card.stp-hand-card .stp-card-front {
+        background-size: 990px 608px; /* 9×110 × 4×152 */
+    }
+
     #stp-hand .card-stock.hand-stock > .bga-cards_card {
         flex: 0 0 auto; /* иначе flex жмёт карты вместо переноса на строку ниже */
         margin-left: 0 !important; /* библиотечное перекрытие веера */
