@@ -285,7 +285,7 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 
     #stp-hand .card-stock.hand-stock {
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 8px;
         height: auto !important;
         align-content: flex-start;
         padding: 8px;
