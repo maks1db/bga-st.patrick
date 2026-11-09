@@ -273,8 +273,9 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 }
 
 /* Рука в сетке (<995px, планшет/мобилка): карты стоят вертикально ровно —
-   без поворотов и перекрытий веера, зазор удобен для пальца, не поместившиеся
-   карты переносятся на строку ниже. Режим включает handGridMode в setup
+   без поворотов и перекрытий веера, зазор 8px, не поместившиеся карты
+   переносятся на строку ниже. Рука живёт в потоке доски (НЕ fixed — иначе
+   наезжает на элементы управления). Режим включает handGridMode в setup
    (modules/js/Game.js) — breakpoint дублируется, менять в обоих местах!
    NB: библиотека превращает #stp-hand в holder и создаёт внутренний div
    стока (.card-stock.hand-stock) — сеточные правила именно для него. */
@@ -289,20 +290,6 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
         height: auto !important;
         align-content: flex-start;
         padding: 8px;
-    }
-
-    /* Рука всегда видна игроку: прибита к низу экрана. Селекторы с ID —
-       библиотечный CSS в конце head иначе побеждает равную специфичность;
-       .floating (класс вешается observer'ом библиотеки) обрабатывается тем
-       же правилом: его позиционирование должно совпадать в любом состоянии. */
-    #stp-hand .card-stock.hand-stock.floating,
-    #stp-hand .card-stock.hand-stock {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 200;
-        background: none;
     }
 
     #stp-hand .card-stock.hand-stock > .bga-cards_card {
@@ -320,6 +307,21 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 #stp-hand .card-stock.hand-stock.floating {
     bottom: 0 !important;
     background: none;
+}
+
+/* В сетке (<995px) floating глушим целиком — рука в потоке доски, а не
+   поверх неё. Класс .floating вешается observer'ом библиотеки, поэтому
+   обе формы селектора; !important обязателен — глобальное правило выше
+   тоже с !important и равной специфичностью, побеждает стоящее позже. */
+@media (max-width: 994px) {
+    #stp-hand .card-stock.hand-stock.floating,
+    #stp-hand .card-stock.hand-stock {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        background: none !important;
+    }
 }
 
 /* --- Оверлей разбора реликвий ------------------------------------------- */
