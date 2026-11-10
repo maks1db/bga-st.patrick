@@ -1,18 +1,17 @@
-  import typescript from '@rollup/plugin-typescript';
+import typescript from '@rollup/plugin-typescript';
 
-  export default {
-    input: 'src/ts/Game.ts',
-    output: {
-      file: 'modules/js/Game.js',
-      format: 'es',
-      sourcemap: false,
-      inlineDynamicImports: true,
-    },
-    plugins: [
-      typescript({
-        tsconfig: './tsconfig.json',
-        outDir: 'modules/js',
-      }),
-    ],
-    treeshake: false,
-  };
+export default {
+  input: 'src/app/Game.ts',
+  output: {
+    file: 'modules/js/Game.js',
+    format: 'es',
+    sourcemap: false,
+    inlineDynamicImports: true,
+  },
+  plugins: [
+    typescript({
+      tsconfig: './tsconfig.json',
+    }),
+  ],
+  treeshake: false,
+};

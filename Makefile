@@ -17,7 +17,12 @@ check:
 	@for f in $(DEPLOY_PHP) $(DEPLOY_STATES); do php -l "$$f" || exit 1; done
 	@echo "OK PHP"
 
-deploy: check
+# Клиент собирается из src/ (TS → rollup, SCSS → sass) в modules/js/Game.js
+# и stpatrick.css — артефакты коммитятся, деплой всегда собирает заново.
+build:
+	npm run build
+
+deploy: check build
 	$(BGA_PY) $(BGA_SFTP) put $(DEPLOY_ROOT) $(BGA_REMOTE_DIR)/
 	$(BGA_PY) $(BGA_SFTP) put stpatrick.css $(BGA_REMOTE_DIR)/
 	$(BGA_PY) $(BGA_SFTP) put $(DEPLOY_PHP) $(BGA_REMOTE_DIR)/modules/php/
