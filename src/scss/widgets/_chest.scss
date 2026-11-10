@@ -1,0 +1,11 @@
+// ---- widgets: ларец с реликвиями (img/phase-1.png, 600×600) --------------
+
+.stp-chest {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    background-image: url('img/phase-1.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}

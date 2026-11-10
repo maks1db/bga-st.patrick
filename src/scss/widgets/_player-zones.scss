@@ -1,0 +1,66 @@
+// ---- widgets: зоны игроков (HP, реликвии, открытые змеиные карты) --------
+@use '../tokens' as *;
+
+.stp-player-zone {
+    min-width: 180px;
+    max-width: 260px;
+    flex: 1 1 180px;
+    border: 1px solid #88888844;
+    border-radius: 8px;
+    padding: 6px;
+    background: #88888811;
+}
+
+.stp-player-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    flex-wrap: wrap;
+}
+
+.stp-hp {
+    font-weight: bold;
+}
+
+/* Специфичность с ID выше библиотечных правил bga-cards (.line-stock),
+   которые JS вставляет в конец head и которые иначе выигрывают по порядку. */
+#stp-board .stp-snakes.card-stock {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 4px;
+    min-height: 0;
+}
+
+/* Ряды змей: до 6 карт в ряду. Новый ряд перекрывает предыдущий,
+   оставляя видимой его верхнюю полосу (~35px) с номиналом.
+   Внутри ряда — горизонтальная стопка: видна левая полоса карты
+   (номинал). DOM-порядок = сортировка (масть, номинал), z-index
+   внутри ряда выставляет JS: ранние лежат поверх поздних. */
+.stp-snake-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    height: 143px; /* высота карты с рамкой — ряд не растягивается от перекрытий */
+}
+
+.stp-snake-row + .stp-snake-row {
+    margin-top: -108px; /* перекрытие рядов: виден верх предыдущего с номиналом */
+}
+
+.stp-snake-row .bga-cards_card {
+    position: relative;
+    flex: 0 0 auto;
+    margin-right: -80px;
+}
+
+.stp-snake-row .bga-cards_card:hover {
+    z-index: 100 !important;
+}
+
+@media (max-width: $bp-mobile) {
+    .stp-snake-row { height: 101px; }
+    .stp-snake-row + .stp-snake-row { margin-top: -76px; }
+    .stp-snake-row .bga-cards_card { margin-right: -54px; }
+}

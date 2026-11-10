@@ -1,0 +1,178 @@
+// ---- widgets: оверлей разбора реликвий ------------------------------------
+@use '../tokens' as *;
+// Покрывает только игровое поле (#stp-board), а не весь экран.
+// Живёт между входами DraftRelics (следующий драфтер — без повторного
+// интро), закрывается при входе в любую другую фазу.
+
+#stp-draft-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* Низ оверлея — по верхней кромке руки (переменную ставит JS из
+       высоты #stp-hand): ларец и управление не уходят под карты.
+       Без переменной 0px = прежнее поведение (всё поле). */
+    bottom: var(--stp-draft-bottom, 0px);
+    z-index: 950;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background: $color-draft-bg;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    overflow: hidden auto;
+}
+
+#stp-draft-overlay.stp-open { opacity: 1; }
+
+.stp-draft-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: top 0.7s ease, transform 0.7s ease;
+    pointer-events: none;
+}
+
+.stp-draft-title-text {
+    display: inline-block;
+    font-size: clamp(22px, 6vw, 36px);
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: $color-gold;
+    text-shadow: 0 2px 12px #000000, 0 0 24px #c9a22766;
+    text-align: center;
+    line-height: 1.15;
+    max-width: 94vw;
+    animation: stp-draft-title-in 0.7s ease-out both;
+}
+
+@keyframes stp-draft-title-in {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#stp-draft-overlay.stp-placed .stp-draft-title {
+    top: 12px;
+    transform: translate(-50%, 0);
+}
+
+.stp-draft-remaining {
+    margin-top: clamp(50px, 9vh, 76px);
+    font-size: clamp(16px, 4.5vw, 20px);
+    color: #dddddd;
+    opacity: 0;
+    transition: opacity 0.5s ease 0.3s;
+}
+
+#stp-draft-overlay.stp-placed .stp-draft-remaining { opacity: 1; }
+
+.stp-draft-chest-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
+}
+
+#stp-draft-overlay.stp-placed .stp-draft-chest-wrap {
+    opacity: 1;
+    transform: none;
+}
+
+.stp-chest.stp-draft-chest {
+    /* --stp-draft-chest-size ставит JS (вписывает ларец в высоту оверлея);
+       без неё — прежний размер. Потолок $chest-max (исходник 600×600 —
+       лёгкий апскейл допустим), 96% — почти вся ширина поля на мобильном,
+       floor $chest-min — минимальная высота стола с ларцом (не влезает —
+       оверлей скроллится). */
+    width: max($chest-min, min($chest-max, 96%, var(--stp-draft-chest-size, 100vh)));
+    height: auto;
+    aspect-ratio: 1 / 1;
+}
+
+.stp-draft-relics {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.stp-draft-relic {
+    position: absolute;
+    width: 7.5%;
+    height: 7.5%;
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+    filter: drop-shadow(0 1px 2px #000000aa);
+    transition: opacity 0.4s ease;
+}
+
+.stp-draft-relic.stp-out { opacity: 0; }
+
+.stp-draft-controls-slot {
+    width: 100%;
+    max-width: 420px;
+    margin-top: 16px;
+}
+
+.stp-draft-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    column-gap: 16px;
+    row-gap: 10px;
+}
+
+.stp-draft-controls .bgabutton {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 96px;
+    min-height: 42px;
+    font-size: 16px;
+    padding: 8px 14px;
+}
+
+.stp-take-stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 24px;
+    background: #000000b3;
+}
+
+.stp-step-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: $color-gold-dark;
+    color: #221a05;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.stp-step-btn:disabled { opacity: 0.4; cursor: default; }
+
+.stp-step-value {
+    min-width: 34px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Компактный режим на низких экранах (мобильный landscape) */
+@media (max-height: $bp-compact-height) {
+    .stp-draft-title-text { font-size: 20px; }
+    #stp-draft-overlay.stp-placed .stp-draft-title { top: 6px; }
+    .stp-draft-remaining { margin-top: 32px; font-size: 15px; }
+    .stp-draft-controls .bgabutton { min-height: 38px; font-size: 15px; }
+    .stp-step-btn { width: 38px; height: 38px; font-size: 22px; }
+}

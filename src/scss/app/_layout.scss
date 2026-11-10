@@ -1,0 +1,40 @@
+// ---- app: общая раскладка стола ------------------------------------------
+@use '../tokens' as *;
+
+/* Фон стола: перекрываем стандартный фон BGA на html/body/#page-content. */
+html, body, #page-content {
+    background-image: url('img/background.jpg') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+}
+
+/* В фазе разбора реликвий фон стола — чёрный (класс ставится из DraftOverlayWidget.open) */
+html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content {
+    background-image: none !important;
+    background-color: $color-draft-bg !important;
+}
+
+#stp-board {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* Рука игрока — прижата к низу поля */
+#stp-hand {
+    margin-top: auto;
+}
+
+#stp-players {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}

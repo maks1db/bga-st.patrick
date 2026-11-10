@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
@@ -7,79 +8,87 @@
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
- * stpatrick.css — «Охота на змей» (St Patrick)
+ * Game.scss — входная точка стилей «Охота на змей» (St Patrick).
+ * Собирается: sass --no-source-map src/scss/Game.scss stpatrick.css
+ *
+ * Структура — FSD (feature-sliced design), слои в порядке каскада:
+ *   app/      → раскладка стола
+ *   widgets/  → самостоятельные блоки UI (зоны, взятка, рука, оверлей драфта…)
+ *   features/ → пользовательские сценарии (передача карт)
+ *   entities/ → доменные сущности (карта)
+ *   shared/   → переиспользуемое (токены, иконки-спрайт)
+ *
+ * ⚠ Порядок @use = порядок в выходном CSS (каскад!). Правки вносить в
+ * партиалы, порядок блоков внутри _hand.scss критичен — не переставлять.
  */
-
-/* --- Общая раскладка --------------------------------------------------- */
 /* Фон стола: перекрываем стандартный фон BGA на html/body/#page-content. */
-
 html, body, #page-content {
-    background-image: url('img/background.jpg') !important;
-    background-size: cover !important;
-    background-repeat: no-repeat !important;
-    background-attachment: fixed !important;
+  background-image: url("img/background.jpg") !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
 }
 
-/* В фазе разбора реликвий фон стола — чёрный (класс ставится из openDraftOverlay) */
+/* В фазе разбора реликвий фон стола — чёрный (класс ставится из DraftOverlayWidget.open) */
 html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content {
-    background-image: none !important;
-    background-color: #060503 !important;
+  background-image: none !important;
+  background-color: #060503 !important;
 }
 
 #stp-board {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Рука игрока — прижата к низу поля */
 #stp-hand {
-    margin-top: auto;
+  margin-top: auto;
 }
 
 #stp-players {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .stp-player-zone {
-    min-width: 180px;
-    max-width: 260px;
-    flex: 1 1 180px;
-    border: 1px solid #88888844;
-    border-radius: 8px;
-    padding: 6px;
-    background: #88888811;
+  min-width: 180px;
+  max-width: 260px;
+  flex: 1 1 180px;
+  border: 1px solid rgba(136, 136, 136, 0.2666666667);
+  border-radius: 8px;
+  padding: 6px;
+  background: rgba(136, 136, 136, 0.0666666667);
 }
 
 .stp-player-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  flex-wrap: wrap;
 }
 
 .stp-hp {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 /* Специфичность с ID выше библиотечных правил bga-cards (.line-stock),
    которые JS вставляет в конец head и которые иначе выигрывают по порядку. */
 #stp-board .stp-snakes.card-stock {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-top: 4px;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 4px;
+  min-height: 0;
 }
 
 /* Ряды змей: до 6 карт в ряду. Новый ряд перекрывает предыдущий,
@@ -88,234 +97,234 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
    (номинал). DOM-порядок = сортировка (масть, номинал), z-index
    внутри ряда выставляет JS: ранние лежат поверх поздних. */
 .stp-snake-row {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    height: 143px; /* высота карты с рамкой — ряд не растягивается от перекрытий */
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  height: 143px; /* высота карты с рамкой — ряд не растягивается от перекрытий */
 }
 
 .stp-snake-row + .stp-snake-row {
-    margin-top: -108px; /* перекрытие рядов: виден верх предыдущего с номиналом */
+  margin-top: -108px; /* перекрытие рядов: виден верх предыдущего с номиналом */
 }
 
 .stp-snake-row .bga-cards_card {
-    position: relative;
-    flex: 0 0 auto;
-    margin-right: -80px;
+  position: relative;
+  flex: 0 0 auto;
+  margin-right: -80px;
 }
 
 .stp-snake-row .bga-cards_card:hover {
-    z-index: 100 !important;
+  z-index: 100 !important;
 }
 
 @media (max-width: 640px) {
-    .stp-snake-row { height: 101px; }
-    .stp-snake-row + .stp-snake-row { margin-top: -76px; }
-    .stp-snake-row .bga-cards_card { margin-right: -54px; }
+  .stp-snake-row {
+    height: 101px;
+  }
+  .stp-snake-row + .stp-snake-row {
+    margin-top: -76px;
+  }
+  .stp-snake-row .bga-cards_card {
+    margin-right: -54px;
+  }
 }
-
 #stp-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 /* Область розыгрыша: белая, сильно прозрачная. Фиксированная комфортная
    ширина (не схлопывается под карты); растёт, если сыгранных карт больше.
    Здесь же лежат подтверждённые карты передачи (#stp-pass-cards). */
 #stp-trick {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    width: fit-content;
-    min-width: 480px;
-    max-width: 100%;
-    min-height: 143px; /* высота карты (141+рамка) — зона пустая и с картами одинакова */
-    padding: 16px 10px; /* отступ 16px сверху/снизу от карты */
-    background: #ffffff30;
-    border: 1px solid #ffffff55;
-    border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 480px;
+  max-width: 100%;
+  min-height: 143px; /* высота карты (141+рамка) — зона пустая и с картами одинакова */
+  padding: 16px 10px; /* отступ 16px сверху/снизу от карты */
+  background: rgba(255, 255, 255, 0.1882352941);
+  border: 1px solid rgba(255, 255, 255, 0.3333333333);
+  border-radius: 12px;
 }
 
 /* Зона передачи внутри игровой зоны: карты встают в её ряд,
-   кнопка отмены показывается под зоной (см. syncPassZone). */
+   кнопка отмены показывается под зоной (см. PassCardsFeature.syncZone). */
 #stp-pass-cards {
-    display: none;
-    align-items: center;
-    gap: 8px;
+  display: none;
+  align-items: center;
+  gap: 8px;
 }
 
 #stp-pass-cards.stp-visible {
-    display: flex;
+  display: flex;
 }
 
 #stp-pass-cancel {
-    flex: 0 0 auto;
-    width: auto;
-    min-width: 140px;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 140px;
 }
 
 /* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур
    (outline — чтобы не было сдвига вёрстки веера). */
 .stp-card.stp-selected {
-    background: transparent;
-    outline: 2px dashed #4CAF50;
-    outline-offset: -3px;
-    box-shadow: 0 0 10px #4CAF5080;
+  background: transparent;
+  outline: 2px dashed #4CAF50;
+  outline-offset: -3px;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5019607843);
 }
 
 /* Баннер передачи карт в центре поля */
 .stp-pass-info {
-    font-size: 18px;
-    color: #2b2b2b;
-    background: #ffffffb3;
-    border-radius: 10px;
-    padding: 6px 16px;
-    text-align: center;
+  font-size: 18px;
+  color: #2b2b2b;
+  background: rgba(255, 255, 255, 0.7019607843);
+  border-radius: 10px;
+  padding: 6px 16px;
+  text-align: center;
 }
 
 /* Подпись «кто сыграл» над картой в области розыгрыша —
    текст цветом игрока (--stp-by-color), без плашки и теней. */
 .stp-card .stp-trick-by {
-    position: absolute;
-    top: -24px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--stp-by-color, #ffffff);
-    font-size: 13px;
-    font-weight: bold;
-    line-height: 1.2;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 5;
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--stp-by-color, #ffffff);
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
 }
 
-/* --- Итоговая таблица раунда -------------------------------------------- */
-/* Встаёт в потоке над игровой зоной (первый ребёнок #stp-center) —
-   не перекрывает руку и зоны, не блокирует игру. Закрывается по ×;
-   переживает newRound и исчезает при reload (см. showRoundSummary). */
-
 #stp-round-summary {
-    background: #000000b8;
-    border: 1px solid #ffffff44;
-    border-radius: 10px;
-    padding: 8px 14px 10px;
-    color: #ffffff;
-    max-width: 94%;
+  background: rgba(0, 0, 0, 0.7215686275);
+  border: 1px solid rgba(255, 255, 255, 0.2666666667);
+  border-radius: 10px;
+  padding: 8px 14px 10px;
+  color: #ffffff;
+  max-width: 94%;
 }
 
 .stp-rs-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    font-weight: bold;
-    margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-weight: bold;
+  margin-bottom: 2px;
 }
 
 .stp-rs-close {
-    flex: 0 0 auto;
-    width: auto;
-    background: none;
-    border: none;
-    color: #ffffffaa;
-    font-size: 18px;
-    line-height: 1;
-    padding: 2px 6px;
-    cursor: pointer;
+  flex: 0 0 auto;
+  width: auto;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6666666667);
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
 }
 
-.stp-rs-close:hover { color: #ffffff; }
+.stp-rs-close:hover {
+  color: #ffffff;
+}
 
 .stp-rs-table {
-    border-collapse: collapse;
-    font-size: 14px;
+  border-collapse: collapse;
+  font-size: 14px;
 }
 
 .stp-rs-table th,
 .stp-rs-table td {
-    padding: 3px 12px 3px 0;
-    text-align: left;
-    white-space: nowrap;
+  padding: 3px 12px 3px 0;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .stp-rs-table th:last-child,
-.stp-rs-table td:last-child { padding-right: 0; }
+.stp-rs-table td:last-child {
+  padding-right: 0;
+}
 
 .stp-rs-table th {
-    font-weight: normal;
-    font-size: 13px;
-    color: #ffffffaa;
+  font-weight: normal;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6666666667);
 }
 
 .stp-rs-name {
-    font-weight: bold;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-weight: bold;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* HP <= 0 — выживание под вопросом: красным жирным */
 .stp-rs-dead {
-    color: #ff5252;
-    font-weight: bold;
+  color: #ff5252;
+  font-weight: bold;
 }
 
 #stp-hand {
-    display: flex;
-    justify-content: center;
-    min-height: 110px;
-    width: 100%;
+  display: flex;
+  justify-content: center;
+  min-height: 110px;
+  width: 100%;
 }
 
 /* Рука в сетке (<995px, планшет/мобилка): карты стоят вертикально ровно —
    без поворотов и перекрытий веера, зазор 8px, не поместившиеся карты
    переносятся на строку ниже. Рука живёт в потоке доски (НЕ fixed — иначе
    наезжает на элементы управления). Режим включает handGridMode в setup
-   (modules/js/Game.js) — breakpoint дублируется, менять в обоих местах!
+   (Game.ts) — breakpoint дублируется, менять в обоих местах!
    NB: библиотека превращает #stp-hand в holder и создаёт внутренний div
    стока (.card-stock.hand-stock) — сеточные правила именно для него. */
 @media (max-width: 994px) {
-    #stp-hand {
-        height: auto !important; /* библиотека фиксирует высоту веера */
-    }
-
-    #stp-hand .card-stock.hand-stock {
-        flex-wrap: wrap;
-        gap: 8px;
-        height: auto !important;
-        align-content: flex-start;
-        padding: 8px;
-    }
-
-    /* Рука крупнее полевых карт (читаемость): zoom на картах ВНУТРИ руки —
-       при переходе карты на поле/в зоны правило перестаёт matches и размер
-       возвращается автоматически. 102×141 → ~108×150. Поле и зоны змей
-       не масштабируются. Спрайт масштабируется вместе с картой — лицо
-       не сбивается. */
-    #stp-hand .stp-card {
-        zoom: 1.06;
-    }
-
-    #stp-hand .card-stock.hand-stock > .bga-cards_card {
-        flex: 0 0 auto; /* иначе flex жмёт карты вместо переноса на строку ниже */
-        margin-left: 0 !important; /* библиотечное перекрытие веера */
-        transform: none !important;
-    }
+  #stp-hand {
+    height: auto !important; /* библиотека фиксирует высоту веера */
+  }
+  #stp-hand .card-stock.hand-stock {
+    flex-wrap: wrap;
+    gap: 8px;
+    height: auto !important;
+    align-content: flex-start;
+    padding: 8px;
+  }
+  /* Рука крупнее полевых карт (читаемость): zoom на картах ВНУТРИ руки —
+     при переходе карты на поле/в зоны правило перестаёт matches и размер
+     возвращается автоматически. 102×141 → ~108×150. Поле и зоны змей
+     не масштабируются. Спрайт масштабируется вместе с картой — лицо
+     не сбивается. */
+  #stp-hand .stp-card {
+    zoom: 1.06;
+  }
+  #stp-hand .card-stock.hand-stock > .bga-cards_card {
+    flex: 0 0 auto; /* иначе flex жмёт карты вместо переноса на строку ниже */
+    margin-left: 0 !important; /* библиотечное перекрытие веера */
+    transform: none !important;
+  }
 }
-
 /* Библиотечный floating уезжает за низ экрана: bottom считается как
    calc(высота×0.65 − высота) = −0.35×высоты (переменная ставится
    в конструкторе библиотеки), лица карт обрезаются. Фиксируем веер
    честно к низу viewport на всех разрешениях; радиальный ореол гасим —
    он рассчитан на их же переменные. */
 #stp-hand .card-stock.hand-stock.floating {
-    bottom: 0 !important;
-    background: none;
+  bottom: 0 !important;
+  background: none;
 }
 
 /* В сетке (<995px) floating глушим целиком — рука в потоке доски, а не
@@ -323,22 +332,21 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
    обе формы селектора; !important обязателен — глобальное правило выше
    тоже с !important и равной специфичностью, побеждает стоящее позже. */
 @media (max-width: 994px) {
-    #stp-hand .card-stock.hand-stock.floating,
-    #stp-hand .card-stock.hand-stock {
-        position: static !important;
-        left: auto !important;
-        right: auto !important;
-        bottom: auto !important;
-        background: none !important;
-    }
+  #stp-hand .card-stock.hand-stock.floating,
+  #stp-hand .card-stock.hand-stock {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    background: none !important;
+  }
 }
-
 /* В фазе разбора реликвий рука показывается ПОВЕРХ чёрного оверлея: решение
    «взять/пасовать» принимается по своим картам. Класс stp-draft-open ставит
-   openDraftOverlay (снимает closeDraftOverlay), z-index выше оверлея (950). */
+   DraftOverlayWidget (снимает close), z-index выше оверлея (950). */
 body.stp-draft-open #stp-hand {
-    position: relative;
-    z-index: 960;
+  position: relative;
+  z-index: 960;
 }
 
 /* В фазе драфта рука мельче — ТОЛЬКО до 995px (на десктопе веер полного
@@ -346,293 +354,322 @@ body.stp-draft-open #stp-hand {
    в отличие от zoom по картам, ужимается и свес веера над контейнером —
    оверлей занимает больше высоты, ларец крупнее. Специфичность с ID выше
    библиотечных классов. transform (не zoom): layout-размеры стока не
-   меняются — syncDraftBottom меряет реальные rect'ы и сам подтягивает
-   низ оверлея. */
+   меняются — DraftOverlayWidget.syncBottom меряет реальные rect'ы и сам
+   подтягивает низ оверлея. */
 @media (max-width: 994px) {
-    body.stp-draft-open #stp-hand .card-stock.hand-stock {
-        transform: scale(0.7);
-        transform-origin: bottom center;
-    }
+  body.stp-draft-open #stp-hand .card-stock.hand-stock {
+    transform: scale(0.7);
+    transform-origin: bottom center;
+  }
 }
-
-/* --- Оверлей разбора реликвий ------------------------------------------- */
-/* Покрывает только игровое поле (#stp-board), а не весь экран. */
-
 #stp-draft-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    /* Низ оверлея — по верхней кромке руки (переменную ставит JS из
-       высоты #stp-hand): ларец и управление не уходят под карты.
-       Без переменной 0px = прежнее поведение (всё поле). */
-    bottom: var(--stp-draft-bottom, 0px);
-    z-index: 950;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px;
-    background: #060503;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    overflow: hidden auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Низ оверлея — по верхней кромке руки (переменную ставит JS из
+     высоты #stp-hand): ларец и управление не уходят под карты.
+     Без переменной 0px = прежнее поведение (всё поле). */
+  bottom: var(--stp-draft-bottom, 0px);
+  z-index: 950;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: #060503;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  overflow: hidden auto;
 }
 
-#stp-draft-overlay.stp-open { opacity: 1; }
+#stp-draft-overlay.stp-open {
+  opacity: 1;
+}
 
 .stp-draft-title {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    transition: top 0.7s ease, transform 0.7s ease;
-    pointer-events: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: top 0.7s ease, transform 0.7s ease;
+  pointer-events: none;
 }
 
 .stp-draft-title-text {
-    display: inline-block;
-    font-size: clamp(22px, 6vw, 36px);
-    font-weight: bold;
-    letter-spacing: 1px;
-    color: #e9c766;
-    text-shadow: 0 2px 12px #000000, 0 0 24px #c9a22766;
-    text-align: center;
-    line-height: 1.15;
-    max-width: 94vw;
-    animation: stp-draft-title-in 0.7s ease-out both;
+  display: inline-block;
+  font-size: clamp(22px, 6vw, 36px);
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #e9c766;
+  text-shadow: 0 2px 12px #000000, 0 0 24px rgba(201, 162, 39, 0.4);
+  text-align: center;
+  line-height: 1.15;
+  max-width: 94vw;
+  animation: stp-draft-title-in 0.7s ease-out both;
 }
 
 @keyframes stp-draft-title-in {
-    from { opacity: 0; transform: scale(0.5); }
-    to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-
 #stp-draft-overlay.stp-placed .stp-draft-title {
-    top: 12px;
-    transform: translate(-50%, 0);
+  top: 12px;
+  transform: translate(-50%, 0);
 }
 
 .stp-draft-remaining {
-    margin-top: clamp(50px, 9vh, 76px);
-    font-size: clamp(16px, 4.5vw, 20px);
-    color: #dddddd;
-    opacity: 0;
-    transition: opacity 0.5s ease 0.3s;
+  margin-top: clamp(50px, 9vh, 76px);
+  font-size: clamp(16px, 4.5vw, 20px);
+  color: #dddddd;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.3s;
 }
 
-#stp-draft-overlay.stp-placed .stp-draft-remaining { opacity: 1; }
+#stp-draft-overlay.stp-placed .stp-draft-remaining {
+  opacity: 1;
+}
 
 .stp-draft-chest-wrap {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 12px;
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
 }
 
 #stp-draft-overlay.stp-placed .stp-draft-chest-wrap {
-    opacity: 1;
-    transform: none;
+  opacity: 1;
+  transform: none;
 }
 
 .stp-chest.stp-draft-chest {
-    /* --stp-draft-chest-size ставит JS (вписывает ларец в высоту оверлея);
-       без неё — прежний размер. Потолок 720px (исходник 600×600 — лёгкий
-       апскейл допустим), 96% — почти вся ширина поля на мобильном,
-       floor 300px — минимальная высота стола с ларцом (не влезает —
-       оверлей скроллится). */
-    width: max(300px, min(720px, 96%, var(--stp-draft-chest-size, 100vh)));
-    height: auto;
-    aspect-ratio: 1 / 1;
+  /* --stp-draft-chest-size ставит JS (вписывает ларец в высоту оверлея);
+     без неё — прежний размер. Потолок $chest-max (исходник 600×600 —
+     лёгкий апскейл допустим), 96% — почти вся ширина поля на мобильном,
+     floor $chest-min — минимальная высота стола с ларцом (не влезает —
+     оверлей скроллится). */
+  width: max(300px, min(720px, 96%, var(--stp-draft-chest-size, 100vh)));
+  height: auto;
+  aspect-ratio: 1/1;
 }
 
 .stp-draft-relics {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .stp-draft-relic {
-    position: absolute;
-    width: 7.5%;
-    height: 7.5%;
-    transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
-    filter: drop-shadow(0 1px 2px #000000aa);
-    transition: opacity 0.4s ease;
+  position: absolute;
+  width: 7.5%;
+  height: 7.5%;
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6666666667));
+  transition: opacity 0.4s ease;
 }
 
-.stp-draft-relic.stp-out { opacity: 0; }
+.stp-draft-relic.stp-out {
+  opacity: 0;
+}
 
 .stp-draft-controls-slot {
-    width: 100%;
-    max-width: 420px;
-    margin-top: 16px;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 16px;
 }
 
 .stp-draft-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    column-gap: 16px;
-    row-gap: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 16px;
+  row-gap: 10px;
 }
 
 .stp-draft-controls .bgabutton {
-    flex: 0 0 auto;
-    width: auto;
-    min-width: 96px;
-    min-height: 42px;
-    font-size: 16px;
-    padding: 8px 14px;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 96px;
+  min-height: 42px;
+  font-size: 16px;
+  padding: 8px 14px;
 }
 
 .stp-take-stepper {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 24px;
-    background: #000000b3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 24px;
+  background: rgba(0, 0, 0, 0.7019607843);
 }
 
 .stp-step-btn {
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 50%;
-    background: #c9a227;
-    color: #221a05;
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 1;
-    cursor: pointer;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: #c9a227;
+  color: #221a05;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.stp-step-btn:disabled { opacity: 0.4; cursor: default; }
+.stp-step-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
 .stp-step-value {
-    min-width: 34px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-    color: #ffffff;
+  min-width: 34px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffffff;
 }
 
 /* Компактный режим на низких экранах (мобильный landscape) */
 @media (max-height: 540px) {
-    .stp-draft-title-text { font-size: 20px; }
-    #stp-draft-overlay.stp-placed .stp-draft-title { top: 6px; }
-    .stp-draft-remaining { margin-top: 32px; font-size: 15px; }
-    .stp-draft-controls .bgabutton { min-height: 38px; font-size: 15px; }
-    .stp-step-btn { width: 38px; height: 38px; font-size: 22px; }
+  .stp-draft-title-text {
+    font-size: 20px;
+  }
+  #stp-draft-overlay.stp-placed .stp-draft-title {
+    top: 6px;
+  }
+  .stp-draft-remaining {
+    margin-top: 32px;
+    font-size: 15px;
+  }
+  .stp-draft-controls .bgabutton {
+    min-height: 38px;
+    font-size: 15px;
+  }
+  .stp-step-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 22px;
+  }
 }
-
-/* --- Элементы: img/elements.png (спрайт 4 ячейки по 192×192) ------------- */
-
 .stp-elt {
-    display: inline-block;
-    background-image: url('img/elements.png');
-    background-repeat: no-repeat;
-    background-size: 400% 100%;
-    vertical-align: middle;
+  display: inline-block;
+  background-image: url("img/elements.png");
+  background-repeat: no-repeat;
+  background-size: 400% 100%;
+  vertical-align: middle;
 }
 
-.stp-elt-heart { background-position: 0% 0; }
-.stp-elt-snake { background-position: 33.3333% 0; }
-.stp-elt-cutesnake { background-position: 66.6667% 0; }
-.stp-elt-relic { background-position: 100% 0; }
+.stp-elt-heart {
+  background-position: 0% 0;
+}
+
+.stp-elt-snake {
+  background-position: 33.3333% 0;
+}
+
+.stp-elt-cutesnake {
+  background-position: 66.6667% 0;
+}
+
+.stp-elt-relic {
+  background-position: 100% 0;
+}
 
 /* Маленькие иконки для счётчиков в зонах игроков */
 .stp-elt-sm {
-    width: 18px;
-    height: 18px;
+  width: 18px;
+  height: 18px;
 }
 
-/* Ларец с реликвиями: img/phase-1.png (600×600) */
 .stp-chest {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    background-image: url('img/phase-1.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+  position: relative;
+  width: 200px;
+  height: 200px;
+  background-image: url("img/phase-1.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
-
-/* --- Карты ------------------------------------------------------------- */
 
 .stp-card {
-    --bga-cards_card-width: 102px;
-    --bga-cards_card-height: 141px;
-    --bga-cards_card-effective-width: 102px;
-    --bga-cards_card-effective-height: 141px;
-    width: 102px;
-    height: 141px;
-    border-radius: 8px;
-    border: 1px solid #33333388;
-    background: #f8f8f8;
-    position: relative;
-    box-shadow: 1px 2px 3px #00000044;
-    display: inline-block;
+  --bga-cards_card-width: 102px;
+  --bga-cards_card-height: 141px;
+  --bga-cards_card-effective-width: 102px;
+  --bga-cards_card-effective-height: 141px;
+  width: 102px;
+  height: 141px;
+  border-radius: 8px;
+  border: 1px solid rgba(51, 51, 51, 0.5333333333);
+  background: #f8f8f8;
+  position: relative;
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.2666666667);
+  display: inline-block;
 }
 
 .stp-card-front {
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-    background-image: url('img/main-sprite.png');
-    background-size: 918px 564px; /* 9×102 × 4×141 — ячейка 136×188 спрайта ужата до 75% */
-    /* Позиция ячейки — через переменные из setupCardFront */
-    background-position: calc(var(--bp-x, 0px) * -1) calc(var(--bp-y, 0px) * -1);
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background-image: url("img/main-sprite.png");
+  background-size: 918px 564px; /* 9×102 × 4×141 — ячейка 136×188 спрайта ужата до 75% */
+  /* Позиция ячейки — через переменные из setupCardFront */
+  background-position: calc(var(--bp-x, 0px) * -1) calc(var(--bp-y, 0px) * -1);
 }
 
 .stp-card-back {
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(45deg, #1d5c33, #1d5c33 6px, #164a28 6px, #164a28 12px);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(45deg, #1d5c33, #1d5c33 6px, #164a28 6px, #164a28 12px);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stp-card-back-logo {
-    font-size: 40px;
-    color: #ffffffcc;
+  font-size: 40px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* Мобильные: карты меньше (ширина/высина — как CARD_W/CARD_H в Game.js).
+/* Мобильные: карты меньше (ширина/высина — как CARD_W/CARD_H в TS).
    effective-* — шаг веера руки; fixed-фон ломается на мобильных. */
 @media (max-width: 640px) {
-    .stp-card {
-        --bga-cards_card-width: 72px;
-        --bga-cards_card-height: 99px;
-        --bga-cards_card-effective-width: 72px;
-        --bga-cards_card-effective-height: 99px;
-    }
-    .stp-card-front {
-        background-size: 648px 396px; /* 9×72 × 4×99 */
-    }
-    /* игровая зона на узком экране: предопределённая ширина,
-       высота — мобильная карта (99) + отступы 16px сверху/снизу */
-    #stp-trick {
-        min-width: 340px;
-        min-height: 101px;
-        padding: 16px 8px;
-    }
-    /* подъём наведённой карты поверх веера — клик по полной ширине */
-    #stp-hand .bga-cards_card:hover {
-        z-index: 70 !important;
-    }
-    /* рука крупнее: 72×99 → ~108×149 (6 карт с рамкой влезают в 736) */
-    #stp-hand .stp-card {
-        zoom: 1.5;
-    }
-    html, body, #page-content {
-        background-attachment: scroll !important;
-    }
+  .stp-card {
+    --bga-cards_card-width: 72px;
+    --bga-cards_card-height: 99px;
+    --bga-cards_card-effective-width: 72px;
+    --bga-cards_card-effective-height: 99px;
+  }
+  .stp-card-front {
+    background-size: 648px 396px; /* 9×72 × 4×99 */
+  }
+  /* игровая зона на узком экране: предопределённая ширина,
+     высота — мобильная карта (99) + отступы 16px сверху/снизу */
+  #stp-trick {
+    min-width: 340px;
+    min-height: 101px;
+    padding: 16px 8px;
+  }
+  /* подъём наведённой карты поверх веера — клик по полной ширине */
+  #stp-hand .bga-cards_card:hover {
+    z-index: 70 !important;
+  }
+  /* рука крупнее: 72×99 → ~108×149 (6 карт с рамкой влезают в 736) */
+  #stp-hand .stp-card {
+    zoom: 1.5;
+  }
+  html, body, #page-content {
+    background-attachment: scroll !important;
+  }
 }

@@ -1,0 +1,36 @@
+/**
+ *------
+ * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
+ * StPatrick implementation : © Maksim <maxim@bga>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ *
+ * Game.scss — входная точка стилей «Охота на змей» (St Patrick).
+ * Собирается: sass --no-source-map src/scss/Game.scss stpatrick.css
+ *
+ * Структура — FSD (feature-sliced design), слои в порядке каскада:
+ *   app/      → раскладка стола
+ *   widgets/  → самостоятельные блоки UI (зоны, взятка, рука, оверлей драфта…)
+ *   features/ → пользовательские сценарии (передача карт)
+ *   entities/ → доменные сущности (карта)
+ *   shared/   → переиспользуемое (токены, иконки-спрайт)
+ *
+ * ⚠ Порядок @use = порядок в выходном CSS (каскад!). Правки вносить в
+ * партиалы, порядок блоков внутри _hand.scss критичен — не переставлять.
+ */
+
+@use 'tokens' as *;
+
+@use 'app/layout';
+
+@use 'widgets/player-zones';
+@use 'widgets/trick';
+@use 'features/pass-cards';
+@use 'widgets/round-summary';
+@use 'widgets/hand';
+@use 'widgets/draft-overlay';
+@use 'shared/elements';
+@use 'widgets/chest';
+@use 'entities/card';

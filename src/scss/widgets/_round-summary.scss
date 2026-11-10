@@ -1,0 +1,70 @@
+// ---- widgets: итоговая таблица раунда ------------------------------------
+// Встаёт в потоке над игровой зоной (первый ребёнок #stp-center) —
+// не перекрывает руку и зоны, не блокирует игру. Закрывается по ×;
+// переживает newRound и исчезает при reload.
+
+#stp-round-summary {
+    background: #000000b8;
+    border: 1px solid #ffffff44;
+    border-radius: 10px;
+    padding: 8px 14px 10px;
+    color: #ffffff;
+    max-width: 94%;
+}
+
+.stp-rs-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.stp-rs-close {
+    flex: 0 0 auto;
+    width: auto;
+    background: none;
+    border: none;
+    color: #ffffffaa;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.stp-rs-close:hover { color: #ffffff; }
+
+.stp-rs-table {
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.stp-rs-table th,
+.stp-rs-table td {
+    padding: 3px 12px 3px 0;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.stp-rs-table th:last-child,
+.stp-rs-table td:last-child { padding-right: 0; }
+
+.stp-rs-table th {
+    font-weight: normal;
+    font-size: 13px;
+    color: #ffffffaa;
+}
+
+.stp-rs-name {
+    font-weight: bold;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* HP <= 0 — выживание под вопросом: красным жирным */
+.stp-rs-dead {
+    color: #ff5252;
+    font-weight: bold;
+}

@@ -1,0 +1,18 @@
+// ---- Дизайн-токены ------------------------------------------------------
+// Брейкпоинты ДУБЛИРУЮТСЯ в TS (Game.ts: CARD_W/CARD_H, handGridMode) —
+// менять в обоих местах!
+$bp-mobile: 640px;      // размер карт/фона спрайта (JS: innerWidth < 640)
+$bp-grid: 994px;        // рука-сетка (JS: innerWidth < 995)
+$bp-compact-height: 540px; // низкий экран (ландшафт) — компактный драфт
+
+$card-w: 102px;
+$card-h: 141px;
+$card-w-mobile: 72px;
+$card-h-mobile: 99px;
+
+$chest-max: 720px;      // потолок ларца (исходник 600×600 — лёгкий апскейл)
+$chest-min: 300px;      // минимальная высота стола с ларцом
+
+$color-gold: #e9c766;
+$color-gold-dark: #c9a227;
+$color-draft-bg: #060503;
