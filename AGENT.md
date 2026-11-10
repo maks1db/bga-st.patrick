@@ -4,8 +4,12 @@ BGA-адаптация «Охота на змей» (St Patrick, Matagot 2023, B
 Техническое имя игры: `stpatrick`.
 
 Стек: PHP-сервер (`modules/php/`, состояния в `modules/php/States/`),
-клиент на новом фреймворке BGA (`modules/js/Game.js`, `bga-cards`/`bga-animations`),
-весь CSS — корневой `stpatrick.css`. Каталог `src-disabled/` не используется.
+клиент — **TypeScript + SCSS в `src/` (FSD)**, собирается в артефакты
+фреймворка: rollup `src/app/Game.ts` → `modules/js/Game.js` (ES+TLA),
+sass `src/scss/Game.scss` → `stpatrick.css`. Каталог `src-disabled/` —
+старый шаблон скаффолда, не используется. Артефакты `modules/js/Game.js`
+и `stpatrick.css` генерируемые — коммитить вместе с исходниками
+(на сервере работают именно они).
 
 ## Обязательный порядок работы
 
@@ -14,9 +18,13 @@ BGA-адаптация «Охота на змей» (St Patrick, Matagot 2023, B
    и `doc/AUTHOR_QUESTIONS.md` (ответы правообладателя).
 2. Проектный скилл: `.claude/skills/board-game-arena/SKILL.md`
    (фазы: Setup → Implementation → Test Loop).
-3. Коммиты: префиксы `feat/style/chore/docs`, сообщения на английском,
-   после каждого законченного блока. Ассеты `img/` коммитить вместе
-   с кодом, который их использует (`chore: add img` + `feat:`).
+3. **Клиент править ТОЛЬКО в `src/`** (TS/SCSS), не в генерируемых
+   `modules/js/Game.js` / `stpatrick.css`. Сборка: `npm run build`
+   (= `tsc`-проверка через rollup-плагин + sass); `make deploy` собирает
+   сам (`deploy: check build`). Коммиты: префиксы `feat/style/chore/docs`,
+   сообщения на английском, после каждого законченного блока. Ассеты `img/`
+   коммитить вместе с кодом, который их использует (`chore: add img` +
+   `feat:`).
 4. Деплой — `make deploy` (см. ниже); `make check` — только при изменениях PHP.
 
 ## Деплой-протокол
@@ -78,10 +86,18 @@ BGA-адаптация «Охота на змей» (St Patrick, Matagot 2023, B
 - `aspect-ratio: 1/1` + `background-size: contain` на пустом div — рабочий
   способ масштабировать декоративную картинку; не забывать
   `position: relative` у контейнера, если внутри absolute-позиционированные дети.
-- **Размер карт задан в нескольких местах сразу** — менять везде: `BgaCards.Manager`
-  (`cardWidth/cardHeight`, inline-размеры в `setupDiv`), шаг сдвига в
-  `setupCardFront` (`backgroundPosition`), CSS `.stp-card` (vars + width/height)
-  и `background-size` спрайта в `.stp-card-front`.
+- **Размеры карт заданы в нескольких местах сразу** — менять везде:
+  `src/entities/card/sprite.ts` (`CARD_W/CARD_H`, порог `innerWidth < 640`)
+  ↔ `src/scss/_tokens.scss` (`$bp-mobile`) и размеры в
+  `src/scss/entities/_card.scss`; брейкпоинт сетки руки:
+  `src/app/Game.ts` (`handGridMode`, `innerWidth < 995`) ↔
+  `src/scss/_tokens.scss` (`$bp-grid`).
+- **Порядок CSS = порядок `@use` в `src/scss/Game.scss`** (каскад!). Внутри
+  `src/scss/widgets/_hand.scss` порядок блоков критичен (сетка ≤994 →
+  floating-фикс → глушение floating ≤994 → поверх оверлея драфта →
+  масштаб драфта ≤994) — не переставлять. Sass воспринимает 8-значный hex
+  как число и пересериализует его в `rgba()` — выходной CSS отличается
+  текстуально, но не по значениям (сверять нормализованным diff'ом).
 
 ## Прочее
 
