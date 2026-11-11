@@ -18,9 +18,9 @@ export function showRoundSummary(game: Game, relics: Record<string, number>, los
         const dmg = parseInt(String(losses[pid] ?? 0), 10);
         return `<tr>
             <td class="stp-rs-name" style="color:#${p.color}">${p.name}</td>
-            <td><span class="stp-elt stp-elt-relic stp-elt-sm"></span> ${relic}</td>
-            <td><span class="stp-elt stp-elt-snake stp-elt-sm"></span> ${dmg}</td>
-            <td class="${hp <= 0 ? 'stp-rs-dead' : ''}"><span class="stp-elt stp-elt-heart stp-elt-sm"></span> ${hp}</td>
+            <td>${relic}</td>
+            <td>${dmg}</td>
+            <td class="${hp <= 0 ? 'stp-rs-dead' : ''}">${hp}</td>
         </tr>`;
     }).join('');
     center.insertAdjacentHTML('afterbegin', `
@@ -32,9 +32,9 @@ export function showRoundSummary(game: Game, relics: Record<string, number>, los
             <table class="stp-rs-table">
                 <tr>
                     <th>${_('Player')}</th>
-                    <th><span class="stp-elt stp-elt-relic stp-elt-sm"></span> ${_('Relics')}</th>
-                    <th><span class="stp-elt stp-elt-snake stp-elt-sm"></span> ${_('Damage')}</th>
-                    <th><span class="stp-elt stp-elt-heart stp-elt-sm"></span> ${_('Health')}</th>
+                    <th><span class="stp-elt stp-elt-relic stp-elt-sm" title="${_('Relics')}"></span></th>
+                    <th><span class="stp-elt stp-elt-snake stp-elt-sm" title="${_('Damage')}"></span></th>
+                    <th><span class="stp-elt stp-elt-heart stp-elt-sm" title="${_('Health')}"></span></th>
                 </tr>
                 ${rows}
             </table>
