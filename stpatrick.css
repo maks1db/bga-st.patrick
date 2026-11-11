@@ -180,10 +180,14 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   --bga-cards_selected-card_outline-size: 0px;
 }
 
-/* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур
-   (outline — чтобы не было сдвига вёрстки веера). */
+/* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур.
+   Контур — на ЛИЦЕ карты: библиотека приподнимает именно лицо
+   (translateY на .front), внешний div стоит на месте. */
 .stp-card.stp-selected {
   background: transparent;
+}
+
+.stp-card.stp-selected .bga-cards_card-side.front {
   outline: 2px dashed #4CAF50;
   outline-offset: -3px;
   box-shadow: 0 0 12px rgba(76, 175, 80, 0.6666666667);
@@ -662,7 +666,9 @@ body.stp-draft-open #stp-hand {
   height: 141px;
   border-radius: 8px;
   border: 1px solid rgba(51, 51, 51, 0.5333333333);
-  background: #f8f8f8;
+  /* фон прозрачный: лицо перекрывает карту целиком, а белая подложка
+     вспыхивала полосой при опускании лица (снятие выделения) */
+  background: transparent;
   position: relative;
   box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.2666666667);
   display: inline-block;

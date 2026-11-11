@@ -13,7 +13,9 @@
     height: 141px;
     border-radius: 8px;
     border: 1px solid #33333388;
-    background: #f8f8f8;
+    /* фон прозрачный: лицо перекрывает карту целиком, а белая подложка
+       вспыхивала полосой при опускании лица (снятие выделения) */
+    background: transparent;
     position: relative;
     box-shadow: 1px 2px 3px #00000044;
     display: inline-block;

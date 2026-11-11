@@ -8,10 +8,14 @@
     --bga-cards_selected-card_outline-size: 0px;
 }
 
-/* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур
-   (outline — чтобы не было сдвига вёрстки веера). */
+/* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур.
+   Контур — на ЛИЦЕ карты: библиотека приподнимает именно лицо
+   (translateY на .front), внешний div стоит на месте. */
 .stp-card.stp-selected {
     background: transparent;
+}
+
+.stp-card.stp-selected .bga-cards_card-side.front {
     outline: 2px dashed #4CAF50;
     outline-offset: -3px;
     box-shadow: 0 0 12px #4CAF50aa;
