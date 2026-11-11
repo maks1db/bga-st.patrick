@@ -13,6 +13,8 @@ use Bga\Games\StPatrick\States\ScoreHunt;
 /**
  * Розыгрыш взятки: старшая карта ведущей масти забирает взятку; змеиные карты
  * выкладываются лицом вверх перед победителем [H14], остальные — в сброс.
+ * Досрочный конец охоты [H16]: если ни у кого не осталось змеиных карт,
+ * оставшиеся карты сбрасываются и охота завершается.
  */
 class ResolveTrick extends GameState
 {
@@ -61,15 +63,28 @@ class ResolveTrick extends GameState
 
         $this->bga->globals->set('trick_plays', []);
 
-        $cardsInHands = 0;
+        // Досрочный конец охоты [H16]: ни у одного игрока не осталось на руке
+        // змеиных карт (наносящих укусы) — оставшиеся карты сбрасываются,
+        // охота завершается и выполняется подсчёт.
+        $leftover = 0;
         foreach ($this->game->playerIds() as $pid) {
-            $cardsInHands += $this->game->getHand($pid)->count();
-        }
-        if ($cardsInHands === 0) {
-            return ScoreHunt::class;
+            $hand = $this->game->getHand($pid);
+            $leftover += $hand->count();
+            foreach ($hand as $card) {
+                if (Game::cardBites($card) > 0) {
+                    $this->gamestate->changeActivePlayer($winnerId);
+                    return HuntPlay::class;
+                }
+            }
         }
 
-        $this->gamestate->changeActivePlayer($winnerId);
-        return HuntPlay::class;
+        if ($leftover > 0) {
+            foreach ($this->game->playerIds() as $pid) {
+                $this->game->cards->moveAllItemsInLocation(['hand', $pid], 'discard');
+            }
+            $this->notify->all('huntEnded', clienttranslate('No snake cards remain in any hand — the remaining cards are discarded and the hunt ends'), []);
+        }
+
+        return ScoreHunt::class;
     }
 }

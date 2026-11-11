@@ -919,6 +919,15 @@ class Game {
         clearTrickLabels();
         layoutSnakeZone(this, winnerId);
     }
+    async notif_huntEnded(args) {
+        // Досрочный конец охоты [H16]: сервер сбросил оставшиеся карты —
+        // убираем свою руку (чужие руки на столе не отображаются).
+        if (this.myHand.length > 0) {
+            const remaining = [...this.myHand];
+            this.myHand = [];
+            await this.handStock.removeCards(remaining);
+        }
+    }
     notif_huntScored(args) {
         this.adjustAllHp(args.losses);
         showRoundSummary(this, args.relics, args.losses);
