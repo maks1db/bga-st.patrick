@@ -209,21 +209,43 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 }
 
 #stp-round-summary {
-  background: rgba(0, 0, 0, 0.7215686275);
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stp-rs-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6509803922);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.stp-rs-dialog {
+  position: relative;
+  background: rgba(20, 20, 20, 0.9490196078);
   border: 1px solid rgba(255, 255, 255, 0.2666666667);
-  border-radius: 10px;
-  padding: 8px 14px 10px;
+  border-radius: 14px;
+  padding: 18px 28px 22px;
   color: #ffffff;
-  max-width: 94%;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8);
+  min-width: 320px;
+  max-width: 92vw;
+  overflow-x: auto;
 }
 
 .stp-rs-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
   font-weight: bold;
-  margin-bottom: 2px;
+  font-size: 20px;
+  margin-bottom: 8px;
 }
 
 .stp-rs-close {
@@ -232,9 +254,9 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.6666666667);
-  font-size: 18px;
+  font-size: 24px;
   line-height: 1;
-  padding: 2px 6px;
+  padding: 2px 8px;
   cursor: pointer;
 }
 
@@ -244,12 +266,12 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 
 .stp-rs-table {
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 19px;
 }
 
 .stp-rs-table th,
 .stp-rs-table td {
-  padding: 3px 12px 3px 0;
+  padding: 6px 22px 6px 0;
   text-align: left;
   white-space: nowrap;
 }
@@ -261,13 +283,19 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 
 .stp-rs-table th {
   font-weight: normal;
-  font-size: 13px;
+  font-size: 15px;
   color: rgba(255, 255, 255, 0.6666666667);
+}
+
+/* иконки в шапке — крупнее счётчикных (18px) */
+.stp-rs-table th .stp-elt {
+  width: 26px;
+  height: 26px;
 }
 
 .stp-rs-name {
   font-weight: bold;
-  max-width: 150px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
 }

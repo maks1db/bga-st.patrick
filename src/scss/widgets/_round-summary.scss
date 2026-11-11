@@ -1,24 +1,47 @@
-// ---- widgets: итоговая таблица раунда ------------------------------------
-// Встаёт в потоке над игровой зоной (первый ребёнок #stp-center) —
-// не перекрывает руку и зоны, не блокирует игру. Закрывается по ×;
-// переживает newRound и исчезает при reload.
+// ---- widgets: итоговая таблица раунда (модальное окно) --------------------
+// Fixed-оверлей поверх всего стола: размытый полупрозрачный бэкдроп (клик
+// по нему закрывает окно) + укрупнённый диалог с таблицей. z-index выше
+// оверлея драфта (950) и руки (960). Закрывается по × или по бэкдропу;
+// переживает newRound, при reload не восстанавливается.
 
 #stp-round-summary {
-    background: #000000b8;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stp-rs-backdrop {
+    position: absolute;
+    inset: 0;
+    background: #000000a6;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.stp-rs-dialog {
+    position: relative;
+    background: #141414f2;
     border: 1px solid #ffffff44;
-    border-radius: 10px;
-    padding: 8px 14px 10px;
+    border-radius: 14px;
+    padding: 18px 28px 22px;
     color: #ffffff;
-    max-width: 94%;
+    box-shadow: 0 8px 40px #000000cc;
+    min-width: 320px;
+    max-width: 92vw;
+    overflow-x: auto;
 }
 
 .stp-rs-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 24px;
     font-weight: bold;
-    margin-bottom: 2px;
+    font-size: 20px;
+    margin-bottom: 8px;
 }
 
 .stp-rs-close {
@@ -27,9 +50,9 @@
     background: none;
     border: none;
     color: #ffffffaa;
-    font-size: 18px;
+    font-size: 24px;
     line-height: 1;
-    padding: 2px 6px;
+    padding: 2px 8px;
     cursor: pointer;
 }
 
@@ -37,12 +60,12 @@
 
 .stp-rs-table {
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 19px;
 }
 
 .stp-rs-table th,
 .stp-rs-table td {
-    padding: 3px 12px 3px 0;
+    padding: 6px 22px 6px 0;
     text-align: left;
     white-space: nowrap;
 }
@@ -52,13 +75,19 @@
 
 .stp-rs-table th {
     font-weight: normal;
-    font-size: 13px;
+    font-size: 15px;
     color: #ffffffaa;
+}
+
+/* иконки в шапке — крупнее счётчикных (18px) */
+.stp-rs-table th .stp-elt {
+    width: 26px;
+    height: 26px;
 }
 
 .stp-rs-name {
     font-weight: bold;
-    max-width: 150px;
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
