@@ -322,7 +322,7 @@ function showRoundSummary(game, relics, losses) {
             <td class="stp-rs-name" style="color:#${p.color}">${p.name}</td>
             <td>${relic}</td>
             <td>${dmg}</td>
-            <td class="${hp <= 0 ? 'stp-rs-dead' : ''}">${hp}</td>
+            <td class="${hp <= 0 ? 'stp-rs-dead' : ''}">${hp}${dmg > 0 ? ` <span class="stp-rs-dmg">(↓${dmg})</span>` : ''}</td>
         </tr>`;
     }).join('');
     document.body.insertAdjacentHTML('beforeend', `

@@ -306,6 +306,12 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   font-weight: bold;
 }
 
+/* нанесённый урон рядом с текущим HP: «(↓3)» красным */
+.stp-rs-dmg {
+  color: #ff5252;
+  font-weight: bold;
+}
+
 #stp-hand {
   display: flex;
   justify-content: center;
