@@ -519,8 +519,18 @@ body.stp-draft-open #stp-hand {
   width: 100%;
   max-width: 420px;
   margin-top: 16px;
+  /* Резерв под управление: высоту фиксирует JS после первого монтирования
+     (--stp-draft-controls-h) — ларец не ресайзится, когда управление
+     драфтера монтируется/исчезает. Fallback — типовая высота ряда:
+     1 ряд (десктоп) / 2 ряда (узкий экран, управление переносится). */
+  min-height: var(--stp-draft-controls-h, 50px);
 }
 
+@media (max-width: 430px) {
+  .stp-draft-controls-slot {
+    min-height: var(--stp-draft-controls-h, 102px);
+  }
+}
 .stp-draft-controls {
   display: flex;
   align-items: center;

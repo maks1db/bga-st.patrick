@@ -224,6 +224,13 @@ class DraftOverlayWidget {
         document.getElementById('stp-take-relics').addEventListener('click', () => this.game.bga.actions.performAction('actTakeRelics', { count: parseInt(valueEl.textContent ?? '1', 10) }));
         document.getElementById('stp-pass-relics').addEventListener('click', () => this.game.bga.actions.performAction('actPassRelics'));
         sync();
+        // Фиксируем высоту слота: при исчезновении управления резерв
+        // сохранится и ларец не изменит размер (см. _draft-overlay.scss).
+        const slot = document.getElementById('stp-draft-controls-slot');
+        const overlay = document.getElementById('stp-draft-overlay');
+        if (slot && overlay) {
+            overlay.style.setProperty('--stp-draft-controls-h', slot.offsetHeight + 'px');
+        }
     }
 }
 
