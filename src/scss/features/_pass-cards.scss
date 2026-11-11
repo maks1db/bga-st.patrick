@@ -1,13 +1,20 @@
 // ---- features: передача карт ---------------------------------------------
 // Выбор карт в руке, баннер «кому передать», подписи «кто сыграл».
 
+/* Гасим фиолетовый контур выбранной карты из bga-cards (по умолчанию
+   5px solid #8a2be2 — перекрывал наш стиль) — выделение рисуем своим
+   зелёным dashed ниже. */
+#stp-board {
+    --bga-cards_selected-card_outline-size: 0px;
+}
+
 /* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур
    (outline — чтобы не было сдвига вёрстки веера). */
 .stp-card.stp-selected {
     background: transparent;
     outline: 2px dashed #4CAF50;
     outline-offset: -3px;
-    box-shadow: 0 0 10px #4CAF5080;
+    box-shadow: 0 0 12px #4CAF50aa;
 }
 
 /* Баннер передачи карт в центре поля */

@@ -173,13 +173,20 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   min-width: 140px;
 }
 
+/* Гасим фиолетовый контур выбранной карты из bga-cards (по умолчанию
+   5px solid #8a2be2 — перекрывал наш стиль) — выделение рисуем своим
+   зелёным dashed ниже. */
+#stp-board {
+  --bga-cards_selected-card_outline-size: 0px;
+}
+
 /* Выбранные карты в руке: прозрачный фон и зелёный dashed-контур
    (outline — чтобы не было сдвига вёрстки веера). */
 .stp-card.stp-selected {
   background: transparent;
   outline: 2px dashed #4CAF50;
   outline-offset: -3px;
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5019607843);
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6666666667);
 }
 
 /* Баннер передачи карт в центре поля */
