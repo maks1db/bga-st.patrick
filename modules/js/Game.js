@@ -361,10 +361,11 @@ function showRoundSummary(game, relics, losses) {
 
 /**
  * Feature: одновременная передача карт соседу слева.
- * Игроки остаются framework-active до раскрытия (сервер следит за глобалом
- * pass_done) — поэтому отмена возможна через обычное действие, а хук
- * активации не срабатывает при подтверждении: клиент сам переключает UI
- * в режим ожидания.
+ * Подтвердивший пас сразу становится non-multiactive (часы останавливаются)
+ * — отмена остаётся возможной: actCancelPassCards живёт в Game.php как
+ * действие «в любое время» и вызывается с checkAction:false (рецепт
+ * «Un-pass»). Хук активации не срабатывает при подтверждении: клиент сам
+ * переключает UI в режим ожидания.
  * Владелец состояния: подтверждённые карты (cards) и флаг ack живут здесь.
  */
 class PassCardsFeature {
@@ -444,7 +445,9 @@ class PassCardsFeature {
     }
     cancel() {
         document.getElementById('stp-pass-cancel')?.remove(); // анти-двойной клик
-        const p = this.game.bga.actions.performAction('actCancelPassCards');
+        // пасанувший уже non-multiactive — клиентская проверка активности
+        // отключается (сервер сам валидирует, см. Game::actCancelPassCards)
+        const p = this.game.bga.actions.performAction('actCancelPassCards', null, { checkAction: false });
         if (!p) {
             this.syncZone();
             return;
@@ -533,8 +536,16 @@ class PassCards {
         const toId = this.game.leftNeighborId(this.bga.players.getCurrentPlayerId());
         const feature = this.game.passCardsFeature;
         if (!isCurrentPlayerActive) {
-            this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
-            feature.showInfo(toId, null);
+            if (feature.cards.length > 0) {
+                // уже подтвердил пас (в т.ч. после reload) — неактивен, часы
+                // остановлены; Cancel остаётся доступным
+                feature.ack = true; // карты из gamedatas.passed — пас уже на сервере
+                feature.showWaiting(toId);
+            }
+            else {
+                this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
+                feature.showInfo(toId, null);
+            }
         }
         else if (feature.cards.length > 0) {
             feature.ack = true; // карты из gamedatas.passed — пас уже на сервере

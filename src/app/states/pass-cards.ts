@@ -1,9 +1,9 @@
 /**
  * Состояние PassCards: одновременная передача карт соседу слева.
- * Игроки остаются framework-active до раскрытия (сервер следит за глобалом
- * pass_done) — поэтому отмена возможна через обычное действие, а хук
- * активации не срабатывает при подтверждении: клиент сам переключает UI
- * в режим ожидания. Логика — в features/pass-cards.
+ * Пасанувший сразу non-multiactive (часы стоп) — отмена через anytime-
+ * действие Game::actCancelPassCards (checkAction:false), которое возвращает
+ * игрока в активный набор; хук активации идемпотентно восстанавливает UI.
+ * Логика — в features/pass-cards.
  */
 import type { Game } from '../Game';
 
@@ -29,8 +29,15 @@ export class PassCards {
         const toId = this.game.leftNeighborId(this.bga.players.getCurrentPlayerId());
         const feature = this.game.passCardsFeature;
         if (!isCurrentPlayerActive) {
-            this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
-            feature.showInfo(toId, null);
+            if (feature.cards.length > 0) {
+                // уже подтвердил пас (в т.ч. после reload) — неактивен, часы
+                // остановлены; Cancel остаётся доступным
+                feature.ack = true; // карты из gamedatas.passed — пас уже на сервере
+                feature.showWaiting(toId);
+            } else {
+                this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
+                feature.showInfo(toId, null);
+            }
         } else if (feature.cards.length > 0) {
             feature.ack = true; // карты из gamedatas.passed — пас уже на сервере
             feature.showWaiting(toId); // уже подтвердил (reload) — ждём раскрытия

@@ -1,9 +1,10 @@
 /**
  * Feature: одновременная передача карт соседу слева.
- * Игроки остаются framework-active до раскрытия (сервер следит за глобалом
- * pass_done) — поэтому отмена возможна через обычное действие, а хук
- * активации не срабатывает при подтверждении: клиент сам переключает UI
- * в режим ожидания.
+ * Подтвердивший пас сразу становится non-multiactive (часы останавливаются)
+ * — отмена остаётся возможной: actCancelPassCards живёт в Game.php как
+ * действие «в любое время» и вызывается с checkAction:false (рецепт
+ * «Un-pass»). Хук активации не срабатывает при подтверждении: клиент сам
+ * переключает UI в режим ожидания.
  * Владелец состояния: подтверждённые карты (cards) и флаг ack живут здесь.
  */
 import { normalizeCard, sortHand } from '../../entities/card';
@@ -94,7 +95,9 @@ export class PassCardsFeature {
 
     cancel(): void {
         document.getElementById('stp-pass-cancel')?.remove(); // анти-двойной клик
-        const p = this.game.bga.actions.performAction('actCancelPassCards');
+        // пасанувший уже non-multiactive — клиентская проверка активности
+        // отключается (сервер сам валидирует, см. Game::actCancelPassCards)
+        const p = this.game.bga.actions.performAction('actCancelPassCards', null, { checkAction: false });
         if (!p) { this.syncZone(); return; } // вызов заблокирован фреймворком — кнопку вернём
         p.catch(() => this.syncZone());
     }
