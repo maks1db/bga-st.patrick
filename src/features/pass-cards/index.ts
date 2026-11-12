@@ -77,20 +77,18 @@ export class PassCardsFeature {
     }
 
     /** Зона передачи: карты лежат в основной игровой зоне (#stp-trick).
-     * Кнопка Cancel — только после подтверждения паса сервером: иначе
-     * отмена улетает раньше actPassCards и сервер честно отвечает ошибкой,
-     * а клик во время анимации перелёта роняет removeCards против addCards. */
+     * Кнопка Cancel — в верхней панели (status bar), только после
+     * подтверждения паса сервером: иначе отмена улетает раньше actPassCards
+     * и сервер честно отвечает ошибкой, а клик во время анимации перелёта
+     * роняет removeCards против addCards. */
     syncZone(): void {
         const box = document.getElementById('stp-pass-cards');
-        const trick = document.getElementById('stp-trick');
-        if (!box || !trick) return;
+        if (!box) return;
         const has = this.cards.length > 0;
         box.classList.toggle('stp-visible', has);
         document.getElementById('stp-pass-cancel')?.remove();
         if (has && this.ack) {
-            trick.insertAdjacentHTML('afterend',
-                `<button class="bgabutton bgabutton_gray" id="stp-pass-cancel" type="button">${_('Cancel')}</button>`);
-            document.getElementById('stp-pass-cancel')!.addEventListener('click', () => this.cancel());
+            this.game.bga.statusBar.addActionButton(_('Cancel'), () => this.cancel(), { id: 'stp-pass-cancel' });
         }
     }
 

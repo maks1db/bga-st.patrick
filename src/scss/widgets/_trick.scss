@@ -27,8 +27,8 @@
     border-radius: 12px;
 }
 
-/* Зона передачи внутри игровой зоны: карты встают в её ряд,
-   кнопка отмены показывается под зоной (см. PassCardsFeature.syncZone). */
+/* Зона передачи внутри игровой зоны: карты встают в её ряд.
+   Кнопка отмены — в верхней панели (status bar, см. PassCardsFeature.syncZone). */
 #stp-pass-cards {
     display: none;
     align-items: center;
@@ -37,10 +37,4 @@
 
 #stp-pass-cards.stp-visible {
     display: flex;
-}
-
-#stp-pass-cancel {
-    flex: 0 0 auto;
-    width: auto;
-    min-width: 140px;
 }
