@@ -551,8 +551,24 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
     (`hpStart = счётчик + dmg` — счётчик к моменту показа уже после
     подсчёта) с красным «(↓N)»; красная подсветка строки — по итоговому
     HP ≤ 0 (класс `stp-rs-dead`).
+46. **Часы останавливаются после передачи карт** (12.11, `9675226`,
+    **НЕ ЗАДЕПЛОЕНО**, живая проверка — по команде; решение по рецепту
+    «Un-pass» из BGA Cookbook): `PassCards::actPassCards` теперь делает
+    пасанувшего `setPlayerNonMultiactive($pid, ResolvePasses::class)` —
+    часы стоп; уход последнего активного сам переводит в ResolvePasses
+    (отдельная ветка setAllPlayersNonMultiactive удалена).
+    `actCancelPassCards` ПЕРЕЕХАЛ в Game.php как действие «в любое время»
+    (без `#[PossibleAction]` — фреймворк ищет его в Game.php, если
+    действие не объявлено в состоянии): восстанавливает карты,
+    `setPlayersMultiactive([$pid], PassCards::class, false)` возвращает
+    игрока в активный набор (часы идут, можно перепасовать). Клиент
+    шлёт отмену с `{ checkAction: false }`; хук `onPlayerActivationChange`
+    в states/pass-cards.ts обрабатывает неактивного с картами в зоне
+    (showWaiting + ack из gamedatas.passed после reload). ⚠ Требует
+    живой проверки: схема anytime-действия по документации, на столе не
+    гонялась.
 
-## Текущая точка: работа 12.11 (день); ДЕПЛОЙ СЛОМАН — очередь на выгрузку, последний кодовый коммит `f15be4b` (+ docs)
+## Текущая точка: работа 12.11 (день); ДЕПЛОЙ СЛОМАН — очередь на выгрузку, последний кодовый коммит `9675226` (+ docs)
 
 - **⚠ Деплой сломан с 12.11 (день)**: `make deploy` падает с
   `paramiko AuthenticationException: Authentication timeout` (дважды).
@@ -562,11 +578,15 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
 - **Очередь на выгрузку** (закоммичено, не на сервере): `f15be4b` +
   `8356078` (п. 43, кнопки драфта в панели, степпер над ларцом),
   `9434890` (п. 44, пульс выигравшей карты + пауза 1с; PHP:
-  `modules/php/States/ResolveTrick.php` шлёт `winnerCard`) и
-  `b0fc712` (п. 45, таблица: змеи/HP на начало раунда).
-  Артефакты: `modules/js/Game.js` + `stpatrick.css` + `ResolveTrick.php`.
-  После восстановления: `make deploy` → сверка sftp → живая проверка
-  (стол создаёт пользователь).
+  `modules/php/States/ResolveTrick.php` шлёт `winnerCard`),
+  `b0fc712` (п. 45, таблица: змеи/HP на начало раунда) и
+  `9675226` (п. 46, часы останавливаются после передачи; PHP:
+  `PassCards.php` + `Game.php`).
+  Артефакты: `modules/js/Game.js` + `stpatrick.css` +
+  `modules/php/States/ResolveTrick.php` + `modules/php/States/PassCards.php`
+  + `modules/php/Game.php`. После восстановления: `make deploy` → сверка
+  sftp → живая проверка (стол создаёт пользователь). **П. 43–46 ещё не
+  видели живого стола — проверять все вместе.**
 - **НЕРЕШЁННАЯ задача (прервана)**: часы текущего игрока продолжают
   идти после подтверждённой передачи карт (PassCards держит всех в
   multiactive ради отмены — `setPlayerNonMultiactive` не вызывается).
