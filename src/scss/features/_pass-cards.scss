@@ -21,6 +21,16 @@
     box-shadow: 0 0 12px #4CAF50aa;
 }
 
+/* Карты, полученные от соседа при раскрытии передачи: красный контур.
+   Класс ставит notif_newHand (флаг highlight от ResolvePasses), снимается
+   при выходе из ReadyDraft и на reused-картах (setupDiv) — в последующих
+   фазах подсветки нет. */
+.stp-card.stp-received .bga-cards_card-side.front {
+    outline: 2px solid #ef5350;
+    outline-offset: -3px;
+    box-shadow: 0 0 12px #ef535066;
+}
+
 /* Баннер передачи карт в центре поля */
 .stp-pass-info {
     font-size: 18px;

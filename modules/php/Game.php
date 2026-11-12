@@ -181,12 +181,15 @@ class Game extends \Bga\GameFramework\Table
         }
     }
 
-    /** Разослать каждому игроку его полную руку (приватное уведомление). */
-    public function notifyHands(string $message = 'You received cards'): void
+    /** Разослать каждому игроку его полную руку (приватное уведомление).
+     *  $highlight: клиент выделяет красном карты, только что полученные
+     *  от соседа (раскрытие передачи). */
+    public function notifyHands(string $message = 'You received cards', bool $highlight = false): void
     {
         foreach ($this->playerIds() as $pid) {
             $this->bga->notify->player($pid, 'newHand', clienttranslate($message), [
                 'hand' => $this->getHand($pid)->values(),
+                'highlight' => $highlight,
             ]);
         }
     }

@@ -11,7 +11,8 @@ use Bga\Games\StPatrick\States\DraftRelics;
 
 /**
  * Раскрытие одновременной передачи: карты из 'passed' попадают в руки
- * получателей, разбор реликвий начинает держатель Патрика.
+ * получателей, далее — ReadyDraft: все подтверждают готовность, и разбор
+ * реликвий начинает держатель Патрика (через StartDraft).
  */
 class ResolvePasses extends GameState
 {
@@ -28,9 +29,10 @@ class ResolvePasses extends GameState
                 $this->game->cards->moveItems($received, ['hand', $pid]);
             }
         }
-        $this->game->notifyHands('You received new cards');
+        // highlight: клиент выделяет красным карты, полученные от соседа
+        $this->game->notifyHands('You received new cards', true);
 
-        $this->gamestate->changeActivePlayer($this->game->findPatrickHolder());
-        return DraftRelics::class;
+        $this->gamestate->setAllPlayersMultiactive();
+        return ReadyDraft::class;
     }
 }

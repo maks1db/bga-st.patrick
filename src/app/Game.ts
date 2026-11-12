@@ -21,6 +21,7 @@ import { showRoundSummary } from '../widgets/round-summary';
 import { PassCardsFeature } from '../features/pass-cards';
 import { DecidePassCount } from './states/decide-pass-count';
 import { PassCards } from './states/pass-cards';
+import { ReadyDraft } from './states/ready-draft';
 import { DraftRelics } from './states/draft-relics';
 import { HuntPlay } from './states/hunt-play';
 import { GameEnd } from './states/game-end';
@@ -64,8 +65,10 @@ export class Game {
             setupDiv: (card: Card, div: HTMLElement) => {
                 div.style.width = CARD_W + 'px';
                 div.style.height = CARD_H + 'px';
-                div.classList.remove('stp-selected'); // выделение не должно жить на reused-карте
-                div.querySelector('.stp-trick-by')?.remove(); // подпись не должна жить на reused-карте
+                // выделение не должно жить на reused-карте (снятие выбора,
+                // подпись взятки, подсветка полученных при передаче)
+                div.classList.remove('stp-selected', 'stp-received');
+                div.querySelector('.stp-trick-by')?.remove();
             },
             setupFrontDiv: (card: Card, div: HTMLElement) => this.setupCardFront(card, div),
             setupBackDiv: (card: Card, div: HTMLElement) => { div.innerHTML = '<span class="stp-card-back-logo">☘</span>'; },
@@ -74,6 +77,7 @@ export class Game {
 
         this.bga.states.register('DecidePassCount', new DecidePassCount(this, bga));
         this.bga.states.register('PassCards', new PassCards(this, bga));
+        this.bga.states.register('ReadyDraft', new ReadyDraft(this, bga));
         this.bga.states.register('DraftRelics', new DraftRelics(this, bga));
         this.bga.states.register('HuntPlay', new HuntPlay(this, bga));
         this.bga.states.register('gameEnd', new GameEnd(this, bga));
@@ -288,15 +292,23 @@ export class Game {
     async notif_newHand(args: any): Promise<void> {
         await this.passCardsFeature.discard(); // переданные карты ушли получателю
         const hand = sortHand(args.hand.map((c: any) => this.normalizeCard(c)));
-        const oldIds = this.myHand.map(c => c.id).sort().join(',');
+        const prev = new Set(this.myHand.map(c => c.id));
+        const received = args.highlight ? hand.filter(c => !prev.has(c.id)).map(c => c.id) : [];
+        const oldIds = [...prev].sort().join(',');
         const newIds = hand.map(c => c.id).sort().join(',');
-        if (oldIds === newIds) return; // та же рука (первая раздача отражена в setup)
-        const old = [...this.myHand];
-        this.myHand = hand;
-        if (old.length > 0) {
-            await this.handStock.removeCards(old);
+        if (oldIds !== newIds) { // та же рука (первая раздача отражена в setup)
+            const old = [...this.myHand];
+            this.myHand = hand;
+            if (old.length > 0) {
+                await this.handStock.removeCards(old);
+            }
+            await this.handStock.addCards(hand);
         }
-        await this.handStock.addCards(hand);
+        // подсветка полученных от соседа карт; снимается при выходе из
+        // ReadyDraft и на reused-картах (setupDiv) — в следующих фазах её нет
+        for (const id of received) {
+            document.getElementById(`stp-card-${id}`)?.classList.add('stp-received');
+        }
     }
 
     notif_newRound(args: any): void {
