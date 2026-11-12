@@ -164,7 +164,7 @@ class DraftOverlayWidget {
         document.body.classList.remove('stp-draft-bg', 'stp-draft-open');
         this.timers.forEach(clearTimeout);
         this.timers = [];
-        ['stp-draft-controls', 'stp-take-relics', 'stp-pass-relics'].forEach(id => document.getElementById(id)?.remove());
+        ['stp-draft-stepper', 'stp-take-relics', 'stp-pass-relics'].forEach(id => document.getElementById(id)?.remove());
         const overlay = document.getElementById('stp-draft-overlay');
         if (!overlay)
             return;
@@ -194,20 +194,19 @@ class DraftOverlayWidget {
             setTimeout(() => token.remove(), 400);
         }
     }
-    /** Управление драфтера: степпер −/+ и «Take»/«Pass» (только активный).
-     *  Всё — в верхней панели (status bar, #generalactions): кнопки через
-     *  addActionButton (Take — primary, Pass — secondary), степпер — кастомной
-     *  вставкой перед ними. Слот в оверлее остаётся пустым (резерв высоты
-     *  под ларец, см. _draft-overlay.scss). */
+    /** Управление драфтера (только активный): степпер −/+ — над ларцом
+     *  (слот в оверлее), кнопки «Take»/«Pass» — в верхней панели (status bar)
+     *  через addActionButton (Take — primary, Pass — secondary). Слот держит
+     *  резерв высоты под ларец (см. _draft-overlay.scss). */
     mountControls(center, isCurrentPlayerActive) {
-        ['stp-draft-controls', 'stp-take-relics', 'stp-pass-relics'].forEach(id => document.getElementById(id)?.remove());
+        ['stp-draft-stepper', 'stp-take-relics', 'stp-pass-relics'].forEach(id => document.getElementById(id)?.remove());
         if (!isCurrentPlayerActive)
             return;
-        const actions = document.getElementById('generalactions');
-        if (!actions)
+        const slot = document.getElementById('stp-draft-controls-slot');
+        if (!slot)
             return;
-        actions.insertAdjacentHTML('beforeend', `
-            <div class="stp-take-stepper" id="stp-draft-controls">
+        slot.insertAdjacentHTML('beforeend', `
+            <div class="stp-take-stepper" id="stp-draft-stepper">
                 <button class="stp-step-btn" id="stp-step-down" type="button">−</button>
                 <span class="stp-step-value" id="stp-step-value">1</span>
                 <button class="stp-step-btn" id="stp-step-up" type="button">+</button>
@@ -228,6 +227,11 @@ class DraftOverlayWidget {
         this.game.bga.statusBar.addActionButton(_('Take'), () => this.game.bga.actions.performAction('actTakeRelics', { count: parseInt(valueEl.textContent ?? '1', 10) }), { id: 'stp-take-relics' });
         this.game.bga.statusBar.addActionButton(_('Pass'), () => this.game.bga.actions.performAction('actPassRelics'), { id: 'stp-pass-relics', color: 'secondary' });
         sync();
+        // Резерв высоты слота: степпер монтируется/исчезает по ходу драфта —
+        // пинним фактическую высоту, ларец не ресайзится (_draft-overlay.scss)
+        const overlay = document.getElementById('stp-draft-overlay');
+        if (overlay)
+            overlay.style.setProperty('--stp-draft-controls-h', slot.offsetHeight + 'px');
     }
 }
 
