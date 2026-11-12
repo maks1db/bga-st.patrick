@@ -529,10 +529,10 @@ body.stp-draft-open #stp-hand {
   width: 100%;
   max-width: 420px;
   margin-top: 16px;
-  /* Резерв под управление: высоту фиксирует JS после первого монтирования
-     (--stp-draft-controls-h) — ларец не ресайзится, когда управление
-     драфтера монтируется/исчезает. Fallback — типовая высота ряда:
-     1 ряд (десктоп) / 2 ряда (узкий экран, управление переносится). */
+  /* Управление драфтера живёт в верхней панели (status bar), слот пуст.
+     min-height — резерв: высоту фиксировал JS при первом монтировании
+     (--stp-draft-controls-h), ларец не ресайзится; фолбэк — 1 ряд
+     управления (десктоп) / 2 ряда (узкий экран). */
   min-height: var(--stp-draft-controls-h, 50px);
 }
 
@@ -541,24 +541,6 @@ body.stp-draft-open #stp-hand {
     min-height: var(--stp-draft-controls-h, 102px);
   }
 }
-.stp-draft-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  column-gap: 16px;
-  row-gap: 10px;
-}
-
-.stp-draft-controls .bgabutton {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 96px;
-  min-height: 42px;
-  font-size: 16px;
-  padding: 8px 14px;
-}
-
 .stp-take-stepper {
   display: flex;
   align-items: center;
@@ -604,10 +586,6 @@ body.stp-draft-open #stp-hand {
   }
   .stp-draft-remaining {
     margin-top: 32px;
-    font-size: 15px;
-  }
-  .stp-draft-controls .bgabutton {
-    min-height: 38px;
     font-size: 15px;
   }
   .stp-step-btn {
