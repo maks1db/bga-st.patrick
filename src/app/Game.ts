@@ -361,9 +361,14 @@ export class Game {
 
     async notif_trickWon(args: any): Promise<void> {
         // Пауза после полного розыгрыша взятки — игроки видят, что было
-        // разыграно, прежде чем карты улетят (очередь уведомлений ждёт).
+        // разыграно; выигравшая карта в это время пульсирует (очередь
+        // уведомлений ждёт промис).
         if (this.bga.gameui.bgaAnimationsActive()) {
-            await new Promise(r => setTimeout(r, 3000));
+            const winnerCardId = args.winnerCard ? parseInt(args.winnerCard.id, 10) : null;
+            const winnerEl = winnerCardId !== null ? document.getElementById(`stp-card-${winnerCardId}`) : null;
+            winnerEl?.classList.add('stp-trick-win-pulse');
+            await new Promise(r => setTimeout(r, 1000));
+            winnerEl?.classList.remove('stp-trick-win-pulse');
         }
         const winnerId = parseInt(args.player_id, 10);
         const snakeCards = (args.snakeCards ?? []).map((c: any) => this.normalizeCard(c));

@@ -31,11 +31,13 @@ class ResolveTrick extends GameState
 
         $winnerId = 0;
         $winnerValue = 0;
+        $winnerCard = null;
         foreach ($plays as $play) {
             $card = $this->game->cards->getItemById($play['cardId']);
             if ($card->suit === $leadCard->suit && ($winnerId === 0 || $card->value > $winnerValue)) {
                 $winnerId = $play['playerId'];
                 $winnerValue = $card->value;
+                $winnerCard = $card;
             }
         }
 
@@ -57,6 +59,7 @@ class ResolveTrick extends GameState
         $this->notify->all('trickWon', clienttranslate('${player_name} wins the trick'), [
             'player_id' => $winnerId,
             'player_name' => $this->game->getPlayerNameById($winnerId),
+            'winnerCard' => $winnerCard, // выигравшая карта — для пульса на клиенте
             'snakeCards' => $snakeCards,
             'discarded' => $discarded,
         ]);

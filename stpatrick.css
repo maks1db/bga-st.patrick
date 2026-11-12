@@ -172,6 +172,24 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   display: flex;
 }
 
+/* Пульс выигравшей карты взятки: небольшое увеличение/уменьшение
+   во время паузы перед разрешением взятки (notif_trickWon). */
+@keyframes stp-trick-win-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.stp-card.stp-trick-win-pulse {
+  animation: stp-trick-win-pulse 0.7s ease-in-out;
+  z-index: 80; /* поверх соседних карт при увеличении */
+}
+
 /* Гасим фиолетовый контур выбранной карты из bga-cards (по умолчанию
    5px solid #8a2be2 — перекрывал наш стиль) — выделение рисуем своим
    зелёным dashed ниже. */

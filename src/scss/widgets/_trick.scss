@@ -38,3 +38,16 @@
 #stp-pass-cards.stp-visible {
     display: flex;
 }
+
+/* Пульс выигравшей карты взятки: небольшое увеличение/уменьшение
+   во время паузы перед разрешением взятки (notif_trickWon). */
+@keyframes stp-trick-win-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+
+.stp-card.stp-trick-win-pulse {
+    animation: stp-trick-win-pulse 0.7s ease-in-out;
+    z-index: 80; /* поверх соседних карт при увеличении */
+}
