@@ -345,7 +345,7 @@ export class Game {
 
     notif_relicsTaken(args: any): void {
         this.updatePlayerRelics(parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
-        this.draftOverlay.syncNotif(parseInt(args.center, 10));
+        this.draftOverlay.syncNotif(parseInt(args.center, 10), parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
     }
 
     notif_relicsPassed(args: any): void { /* лог в журнале */ }

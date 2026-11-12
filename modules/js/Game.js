@@ -84,14 +84,23 @@ class DraftOverlayWidget {
         const center = parseInt(String(args.center), 10);
         if (document.getElementById('stp-draft-overlay')) {
             // повторный вход (следующий драфтер) — интро не повторяем
-            this.sync(center, isCurrentPlayerActive);
+            this.sync(args, isCurrentPlayerActive);
             return;
         }
+        const playersRow = Object.values(this.game.gamedatas.players).map(p => {
+            const pid = parseInt(p.id, 10);
+            const n = parseInt(String(args.relics?.[pid] ?? 0), 10);
+            return `<div class="stp-draft-player" id="stp-draft-player-${pid}">
+                <div class="stp-draft-player-name" style="color:#${p.color}">${p.name}</div>
+                <div class="stp-draft-player-body"><span class="stp-elt stp-elt-relic"></span> <span class="stp-draft-relics-n" id="stp-draft-relics-n-${pid}">${n}</span></div>
+            </div>`;
+        }).join('');
         document.getElementById('stp-board').insertAdjacentHTML('beforeend', `
             <div id="stp-draft-overlay">
                 <div class="stp-draft-title"><span class="stp-draft-title-text">${_('Relic Draft')}</span></div>
                 <div class="stp-draft-remaining">${_('Remaining:')} <span id="stp-draft-remaining-n">${center}</span></div>
                 <div class="stp-draft-controls-slot" id="stp-draft-controls-slot"></div>
+                <div class="stp-draft-players">${playersRow}</div>
                 <div class="stp-draft-chest-wrap">
                     <div class="stp-chest stp-draft-chest" id="stp-draft-chest">
                         <div class="stp-draft-relics" id="stp-draft-chest-relics"></div>
@@ -118,20 +127,91 @@ class DraftOverlayWidget {
             }, 1800));
         }, 1700));
     }
-    sync(center, isCurrentPlayerActive) {
+    sync(args, isCurrentPlayerActive) {
+        const center = parseInt(String(args.center), 10);
         const n = document.getElementById('stp-draft-remaining-n');
         if (n)
             n.textContent = String(center);
+        for (const pid of Object.keys(args.relics ?? {})) {
+            this.setAreaCount(parseInt(pid, 10), parseInt(String(args.relics[pid]), 10));
+        }
         this.renderChestRelics(center);
         this.mountControls(center, isCurrentPlayerActive);
         this.syncBottom();
     }
-    /** Обновление из уведомления relicsTaken: остаток в заголовке + жетоны. */
-    syncNotif(center) {
+    /** Обновление из уведомления relicsTaken: взятые токены улетают из ларца
+     *  в область игрока, его счётчик растёт по анимации. */
+    syncNotif(center, playerId, playerRelics) {
         const n = document.getElementById('stp-draft-remaining-n');
         if (n)
             n.textContent = String(center);
-        this.renderChestRelics(center);
+        const surplus = this.tokens.length - center;
+        if (surplus > 0 && playerId > 0 && document.getElementById(`stp-draft-player-${playerId}`)) {
+            this.flyTokensTo(surplus, playerId);
+        }
+        else {
+            this.renderChestRelics(center); // запасной путь: тихое затухание/докидывание
+        }
+        if (playerId > 0) {
+            this.setAreaCount(playerId, playerRelics, true);
+        }
+    }
+    /** Счётчик реликвий игрока в области драфта; animate — набор числа + пульс. */
+    setAreaCount(playerId, value, animate = false) {
+        const el = document.getElementById(`stp-draft-relics-n-${playerId}`);
+        if (!el)
+            return;
+        const from = parseInt(el.textContent ?? '0', 10);
+        if (from === value)
+            return;
+        if (!animate) {
+            el.textContent = String(value);
+            return;
+        }
+        const dur = Math.min(450, 150 + Math.abs(value - from) * 90);
+        const t0 = performance.now();
+        const tick = (t) => {
+            const k = Math.min(1, (t - t0) / dur);
+            el.textContent = String(Math.round(from + (value - from) * k));
+            if (k < 1)
+                requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+        el.classList.remove('stp-bump');
+        void el.offsetWidth; // перезапуск CSS-анимации
+        el.classList.add('stp-bump');
+    }
+    /** Перелёт токенов из ларца в область игрока, взявшего реликвии. */
+    flyTokensTo(count, playerId) {
+        const target = document.getElementById(`stp-draft-player-${playerId}`);
+        if (!target) {
+            this.renderChestRelics(this.tokens.length - count);
+            return;
+        }
+        const tr = target.getBoundingClientRect();
+        const tx = tr.left + tr.width / 2;
+        const ty = tr.top + tr.height / 2;
+        const flying = this.tokens.splice(Math.max(0, this.tokens.length - count), count);
+        for (const token of flying) {
+            const r = token.getBoundingClientRect();
+            const rot = token.style.getPropertyValue('--rot') || '0deg';
+            const clone = token.cloneNode(true);
+            Object.assign(clone.style, {
+                position: 'fixed', left: r.left + 'px', top: r.top + 'px',
+                width: r.width + 'px', height: r.height + 'px',
+                margin: '0', zIndex: '2000', pointerEvents: 'none',
+            });
+            document.body.appendChild(clone);
+            token.remove();
+            const dx = tx - (r.left + r.width / 2);
+            const dy = ty - (r.top + r.height / 2);
+            const base = `translate(-50%, -50%) rotate(${rot})`;
+            const anim = clone.animate([
+                { transform: `${base} scale(1)`, opacity: 1 },
+                { transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) rotate(${rot}) scale(0.5)`, opacity: 0.8 },
+            ], { duration: 650, easing: 'ease-in-out' });
+            anim.onfinish = () => clone.remove();
+        }
     }
     /** Низ оверлея — по верхней кромке руки (z 960 поверх оверлея):
      * ларец и управление не уходят под карты. Веерные карты визуально вылезают
@@ -936,7 +1016,7 @@ class Game {
     }
     notif_relicsTaken(args) {
         this.updatePlayerRelics(parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
-        this.draftOverlay.syncNotif(parseInt(args.center, 10));
+        this.draftOverlay.syncNotif(parseInt(args.center, 10), parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
     }
     notif_relicsPassed(args) { }
     notif_curse(args) {

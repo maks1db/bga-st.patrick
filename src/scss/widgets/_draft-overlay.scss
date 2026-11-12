@@ -134,6 +134,66 @@
     background: #000000b3;
 }
 
+/* Области игроков драфта: имя над реликвией, счётчик рядом с иконкой.
+   Взятие реликвий анимируется: токены улетают из ларца сюда (JS-клоны),
+   счётчик набирается с пульсом. */
+.stp-draft-players {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.stp-draft-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 72px;
+}
+
+.stp-draft-player-name {
+    font-size: 14px;
+    font-weight: bold;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stp-draft-player-body {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #00000066;
+    border-radius: 18px;
+    padding: 3px 10px;
+}
+
+.stp-draft-player-body .stp-elt {
+    width: 22px;
+    height: 22px;
+}
+
+.stp-draft-relics-n {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    min-width: 20px;
+    text-align: center;
+}
+
+@keyframes stp-draft-bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.45); }
+    100% { transform: scale(1); }
+}
+
+.stp-draft-relics-n.stp-bump {
+    animation: stp-draft-bump 0.5s ease;
+}
+
 .stp-step-btn {
     width: 42px;
     height: 42px;
