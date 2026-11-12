@@ -16,12 +16,24 @@ export class ReadyDraft {
     }
 
     onEnteringState(args: any, isCurrentPlayerActive: boolean): void {
+        this.apply(args, isCurrentPlayerActive);
+    }
+
+    // MULTIPLE_ACTIVE_PLAYER: при reload флаги активности приходят ПОЗЖЕ
+    // onEnteringState — кнопку показываем и здесь (идемпотентно)
+    onUpdateActionButtons(args: any, isCurrentPlayerActive: boolean): void {
+        this.apply(args, isCurrentPlayerActive);
+    }
+
+    private apply(args: any, isCurrentPlayerActive: boolean): void {
         this.game.draftOverlay.close();
         if (isCurrentPlayerActive) {
             this.bga.statusBar.setTitle(_('You received new cards — press the button when ready'));
-            this.bga.statusBar.addActionButton(_('To relic draft'),
-                () => this.game.bga.actions.performAction('actReady'),
-                { id: 'stp-ready-draft' });
+            if (!document.getElementById('stp-ready-draft')) {
+                this.bga.statusBar.addActionButton(_('To relic draft'),
+                    () => this.game.bga.actions.performAction('actReady'),
+                    { id: 'stp-ready-draft' });
+            }
         } else {
             this.bga.statusBar.setTitle(_('Other players are reviewing their new cards'));
         }

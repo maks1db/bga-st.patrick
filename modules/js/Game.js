@@ -609,6 +609,11 @@ class PassCards {
         this.game.draftOverlay.close();
         this.onPlayerActivationChange(args, isCurrentPlayerActive);
     }
+    // MULTIPLE_ACTIVE_PLAYER: при reload флаги активности приходят ПОЗЖЕ
+    // onEnteringState — активность-зависимый UI переключаем и здесь
+    onUpdateActionButtons(args, isCurrentPlayerActive) {
+        this.onPlayerActivationChange(args, isCurrentPlayerActive);
+    }
     onPlayerActivationChange(args, isCurrentPlayerActive) {
         // идемпотентно: хуки multiactive могут дублироваться
         document.getElementById('stp-pass-confirm')?.remove();
@@ -651,10 +656,20 @@ class ReadyDraft {
         this.bga = bga;
     }
     onEnteringState(args, isCurrentPlayerActive) {
+        this.apply(args, isCurrentPlayerActive);
+    }
+    // MULTIPLE_ACTIVE_PLAYER: при reload флаги активности приходят ПОЗЖЕ
+    // onEnteringState — кнопку показываем и здесь (идемпотентно)
+    onUpdateActionButtons(args, isCurrentPlayerActive) {
+        this.apply(args, isCurrentPlayerActive);
+    }
+    apply(args, isCurrentPlayerActive) {
         this.game.draftOverlay.close();
         if (isCurrentPlayerActive) {
             this.bga.statusBar.setTitle(_('You received new cards — press the button when ready'));
-            this.bga.statusBar.addActionButton(_('To relic draft'), () => this.game.bga.actions.performAction('actReady'), { id: 'stp-ready-draft' });
+            if (!document.getElementById('stp-ready-draft')) {
+                this.bga.statusBar.addActionButton(_('To relic draft'), () => this.game.bga.actions.performAction('actReady'), { id: 'stp-ready-draft' });
+            }
         }
         else {
             this.bga.statusBar.setTitle(_('Other players are reviewing their new cards'));

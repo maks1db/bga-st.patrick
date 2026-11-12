@@ -21,6 +21,12 @@ export class PassCards {
         this.onPlayerActivationChange(args, isCurrentPlayerActive);
     }
 
+    // MULTIPLE_ACTIVE_PLAYER: при reload флаги активности приходят ПОЗЖЕ
+    // onEnteringState — активность-зависимый UI переключаем и здесь
+    onUpdateActionButtons(args: any, isCurrentPlayerActive: boolean): void {
+        this.onPlayerActivationChange(args, isCurrentPlayerActive);
+    }
+
     onPlayerActivationChange(args: any, isCurrentPlayerActive: boolean): void {
         // идемпотентно: хуки multiactive могут дублироваться
         document.getElementById('stp-pass-confirm')?.remove();
