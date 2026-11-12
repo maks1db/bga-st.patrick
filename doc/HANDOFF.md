@@ -499,6 +499,23 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
     выделенная — front outline 2px dashed rgb(76,175,80) + transform
     translateY(−28.2px); при повторном клике фон rgba(0,0,0,0) всю
     анимацию.
+41. **Кнопка Cancel в верхней панели + dark mode** (12.11, `bd7bf9c` +
+    `0db90fe`, задеплоено, сверка sftp ok, проверено вживую в dark mode
+    на столе 1002760):
+    - `PassCardsFeature.syncZone`: Cancel больше не вставляется под
+      игровой зоной, а добавляется через
+      `statusBar.addActionButton(..., { id, color: 'secondary' })` —
+      верхняя панель, где кнопки выбора/подтверждения передачи.
+      Опции фреймворка: color primary/secondary(=gray)/red/alert,
+      classes, disabled, destination. ⚠ Status bar (`#generalactions`)
+      живёт ВНУТРИ iframe, не в top-окне.
+    - Dark mode: счётчики зон игроков (❤N, реликвии, укусы) наследовали
+      белый цвет фреймворка на светлом фоне доски — задан явный
+      `color: #2b2b2b` на `.stp-player-head` (имена игроков красятся
+      инлайном поверх — не мешает).
+    - Dark mode включается пользователем через меню (класс
+      `.bga-dark-mode-toggler`); iframe подхватывает тему не мгновенно —
+      программный клик по тоглеру тему в iframe не переключил.
 
 ## Текущая точка: пауза 11.11 (поздний вечер); всё задеплоено и проверено вживую, последний кодовый коммит `cc413ab` (+ docs `bb2e7f9`)
 
