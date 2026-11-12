@@ -88,7 +88,7 @@ export class PassCardsFeature {
         box.classList.toggle('stp-visible', has);
         document.getElementById('stp-pass-cancel')?.remove();
         if (has && this.ack) {
-            this.game.bga.statusBar.addActionButton(_('Cancel'), () => this.cancel(), { id: 'stp-pass-cancel' });
+            this.game.bga.statusBar.addActionButton(_('Cancel'), () => this.cancel(), { id: 'stp-pass-cancel', color: 'secondary' });
         }
     }
 
