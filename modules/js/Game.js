@@ -325,12 +325,14 @@ function showRoundSummary(game, relics, losses) {
         const hpEl = document.getElementById(`stp-hp-${pid}`);
         const hp = hpEl ? parseInt(hpEl.textContent ?? '0', 10) : parseInt(p.score, 10);
         const relic = parseInt(String(relics[pid] ?? 0), 10);
+        const snakes = (game.snakeCards[pid] ?? []).length;
         const dmg = parseInt(String(losses[pid] ?? 0), 10);
+        const hpStart = hp + dmg; // счётчик уже после подсчёта — возвращаем HP на начало раунда
         return `<tr>
             <td class="stp-rs-name" style="color:#${p.color}">${p.name}</td>
             <td>${relic}</td>
-            <td>${dmg}</td>
-            <td class="${hp <= 0 ? 'stp-rs-dead' : ''}">${hp}${dmg > 0 ? ` <span class="stp-rs-dmg">(↓${dmg})</span>` : ''}</td>
+            <td>${snakes}</td>
+            <td class="${hp <= 0 ? 'stp-rs-dead' : ''}">${hpStart}${dmg > 0 ? ` <span class="stp-rs-dmg">(↓${dmg})</span>` : ''}</td>
         </tr>`;
     }).join('');
     document.body.insertAdjacentHTML('beforeend', `
@@ -345,7 +347,7 @@ function showRoundSummary(game, relics, losses) {
                     <tr>
                         <th>${_('Player')}</th>
                         <th><span class="stp-elt stp-elt-relic stp-elt-sm" title="${_('Relics')}"></span></th>
-                        <th><span class="stp-elt stp-elt-snake stp-elt-sm" title="${_('Damage')}"></span></th>
+                        <th><span class="stp-elt stp-elt-snake stp-elt-sm" title="${_('Snakes')}"></span></th>
                         <th><span class="stp-elt stp-elt-heart stp-elt-sm" title="${_('Health')}"></span></th>
                     </tr>
                     ${rows}
