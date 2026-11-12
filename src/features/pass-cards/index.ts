@@ -1,10 +1,10 @@
 /**
  * Feature: одновременная передача карт соседу слева.
  * Подтвердивший пас сразу становится non-multiactive (часы останавливаются)
- * — отмена остаётся возможной: actCancelPassCards живёт в Game.php как
- * действие «в любое время» и вызывается с checkAction:false (рецепт
- * «Un-pass»). Хук активации не срабатывает при подтверждении: клиент сам
- * переключает UI в режим ожидания.
+ * — отмена остаётся возможной: actCancelPassCards в состоянии PassCards
+ * с #[CheckAction(false)] (серверная проверка активности снята; клиент шлёт
+ * с checkAction:false). Хук активации не срабатывает при подтверждении:
+ * клиент сам переключает UI в режим ожидания.
  * Владелец состояния: подтверждённые карты (cards) и флаг ack живут здесь.
  */
 import { normalizeCard, sortHand } from '../../entities/card';
@@ -95,9 +95,11 @@ export class PassCardsFeature {
 
     cancel(): void {
         document.getElementById('stp-pass-cancel')?.remove(); // анти-двойной клик
-        // пасанувший уже non-multiactive — клиентская проверка активности
-        // отключается (сервер сам валидирует, см. Game::actCancelPassCards)
-        const p = this.game.bga.actions.performAction('actCancelPassCards', null, { checkAction: false });
+        // пасанувший уже non-multiactive: серверная проверка активности
+        // снята атрибутом #[CheckAction(false)], клиентскую отключаем
+        // так (пара из документации фреймворка)
+        const p = this.game.bga.actions.performAction('actCancelPassCards', null,
+            { checkAction: false, checkPossibleActions: true });
         if (!p) { this.syncZone(); return; } // вызов заблокирован фреймворком — кнопку вернём
         p.catch(() => this.syncZone());
     }

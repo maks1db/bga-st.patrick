@@ -17,11 +17,9 @@ declare(strict_types=1);
 namespace Bga\Games\StPatrick;
 
 use Bga\Games\StPatrick\States\NewRound;
-use Bga\Games\StPatrick\States\PassCards;
 use Bga\GameFramework\Components\ItemManager\ItemLocation;
 use Bga\GameFramework\Components\ItemManager\ItemManager;
 use Bga\GameFramework\Helpers\Collection;
-use Bga\GameFramework\UserException;
 
 class Game extends \Bga\GameFramework\Table
 {
@@ -194,35 +192,7 @@ class Game extends \Bga\GameFramework\Table
         }
     }
 
-    /**
-     * Отмена подтверждённой передачи до раскрытия [H12]. Действие «в любое
-     * время» — живёт в Game.php без #[PossibleAction]: пасанувший игрок уже
-     * non-multiactive (часы остановлены, см. PassCards::actPassCards) и
-     * вызывает его с checkAction:false (рецепт «Un-pass» из Cookbook).
-     * Карты возвращаются в руку, игрок снова активируется (часы идут,
-     * можно перепасовать). Раскрытие уже началось — отмена невозможна.
-     */
-    public function actCancelPassCards(): void
-    {
-        if (!($this->gamestate->getCurrentMainStateClass() instanceof PassCards)) {
-            throw new UserException(clienttranslate('You cannot do that now'));
-        }
-        $currentPlayerId = (int)$this->getCurrentPlayerId();
-        $done = $this->bga->globals->get('pass_done');
-        if (!in_array($currentPlayerId, $done, true)) {
-            throw new UserException(clienttranslate('You have no passed cards to take back'));
-        }
-        $recipient = $this->leftNeighbor($currentPlayerId);
-        $passed = $this->cards->getItemsInLocation(['passed', $recipient]);
-        $this->cards->moveItems($passed, ['hand', $currentPlayerId]);
-        $this->bga->globals->set('pass_done', array_values(array_diff($done, [$currentPlayerId])));
-        $this->gamestate->setPlayersMultiactive([$currentPlayerId], PassCards::class, false);
-
-        $this->bga->notify->all('passCancelled', clienttranslate('${player_name} takes back the passed card(s)'), [
-            'player_id' => $currentPlayerId,
-            'player_name' => $this->getPlayerNameById($currentPlayerId),
-        ]);
-    }
+    // actCancelPassCards — в States/PassCards.php (#[CheckAction(false)])
 
     // -------------------------------------------------------------------------
     // Framework entry points

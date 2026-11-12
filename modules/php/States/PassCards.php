@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Bga\Games\StPatrick\States;
 
 use Bga\GameFramework\Actions\Types\IntArrayParam;
+use Bga\GameFramework\Actions\CheckAction;
 use Bga\GameFramework\StateType;
 use Bga\GameFramework\States\GameState;
 use Bga\GameFramework\States\PossibleAction;
 use Bga\GameFramework\UserException;
 use Bga\Games\StPatrick\Game;
+use Bga\Games\StPatrick\States\ResolvePasses;
 
 /**
  * Одновременная передача карт соседям слева [H12]. Каждый игрок выбирает
@@ -73,9 +75,38 @@ class PassCards extends GameState
     }
 
     /**
-     * Отмена подтверждённой передачи до раскрытия [H12] — реализация в
-     * Game::actCancelPassCards (действие «в любое время» в Game.php:
-     * пасанувший уже non-multiactive и вызывает его с checkAction:false).
+     * Отмена подтверждённой передачи до раскрытия [H12]. Пасанувший уже
+     * non-multiactive (часы остановлены, см. actPassCards), поэтому
+     * действие разрешено вне активности: `#[CheckAction(false)]` снимает
+     * серверную проверку активности — вместо неё checkPossibleAction
+     * (действие возможно только в PassCards) и собственные проверки.
+     * Клиент шлёт вызов с checkAction:false. Карты возвращаются в руку,
+     * игрок снова активируется (часы идут, можно перепасовать).
+     */
+    #[PossibleAction]
+    #[CheckAction(false)]
+    public function actCancelPassCards(int $currentPlayerId): void
+    {
+        $this->gamestate->checkPossibleAction('actCancelPassCards');
+        $done = $this->bga->globals->get('pass_done');
+        if (!in_array($currentPlayerId, $done, true)) {
+            throw new UserException(clienttranslate('You have no passed cards to take back'));
+        }
+        $recipient = $this->game->leftNeighbor($currentPlayerId);
+        $passed = $this->game->cards->getItemsInLocation(['passed', $recipient]);
+        $this->game->cards->moveItems($passed, ['hand', $currentPlayerId]);
+        $this->bga->globals->set('pass_done', array_values(array_diff($done, [$currentPlayerId])));
+        $this->gamestate->setPlayersMultiactive([$currentPlayerId], PassCards::class, false);
+
+        $this->notify->all('passCancelled', clienttranslate('${player_name} takes back the passed card(s)'), [
+            'player_id' => $currentPlayerId,
+            'player_name' => $this->game->getPlayerNameById($currentPlayerId),
+        ]);
+    }
+
+    /**
+     * Отмена подтверждённой передачи до раскрытия [H12] — реализация выше
+     * (actCancelPassCards с #[CheckAction(false)]).
      */
 
     public function zombie(int $playerId)
