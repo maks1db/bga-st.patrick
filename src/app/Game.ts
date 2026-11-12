@@ -360,16 +360,26 @@ export class Game {
     }
 
     async notif_trickWon(args: any): Promise<void> {
+        // Пауза после полного розыгрыша взятки — игроки видят, что было
+        // разыграно, прежде чем карты улетят (очередь уведомлений ждёт).
+        if (this.bga.gameui.bgaAnimationsActive()) {
+            await new Promise(r => setTimeout(r, 3000));
+        }
         const winnerId = parseInt(args.player_id, 10);
         const snakeCards = (args.snakeCards ?? []).map((c: any) => this.normalizeCard(c));
+        const flights: Promise<any>[] = [];
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
-            await this.snakeStocks[winnerId].addCards(snakeCards, { fromStock: this.trickStock });
+            flights.push(this.snakeStocks[winnerId].addCards(snakeCards, { fromStock: this.trickStock }));
         }
+        // Безвредные карты тоже летят к победителю (в его зону) с затуханием —
+        // видно, какому игроку уходит взятка, даже если змей в ней не было
         const discarded = this.currentTrick.filter(c => !snakeCards.some((s: Card) => s.id === c.id));
         if (discarded.length > 0) {
-            await this.trickStock.removeCards(discarded);
+            const zone = document.getElementById(`stp-zone-${winnerId}`);
+            flights.push(this.trickStock.removeCards(discarded, { slideTo: zone ?? undefined, fadeOut: true }));
         }
+        await Promise.all(flights);
         this.currentTrick = [];
         clearTrickLabels();
         layoutSnakeZone(this, winnerId);
