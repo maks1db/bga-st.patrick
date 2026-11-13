@@ -95,6 +95,15 @@
     aspect-ratio: 1 / 1;
 }
 
+/* Узкий экран (рука-сетка): ларец ВСЕГДА полного размера — не ужимаем
+   по высоте остатка оверлея, как на десктопе. Не влезает — оверлей
+   скроллится. */
+@media (max-width: $bp-grid) {
+    .stp-chest.stp-draft-chest {
+        width: min($chest-max, 96%);
+    }
+}
+
 .stp-draft-relics {
     position: absolute;
     inset: 0;
