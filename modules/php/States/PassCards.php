@@ -35,24 +35,32 @@ class PassCards extends GameState
     }
 
     /**
-     * Игрок завершил выбор. Пасанувший сразу становится non-multiactive —
-     * его часы останавливаются, пока остальные выбирают. Отмена возможна
-     * в любой момент до раскрытия: actCancelPassCards в Game.php (действие
-     * «в любое время», клиент шлёт с checkAction:false) возвращает игрока
-     * в активный набор. Когда уходит последний активный, фреймворк сам
-     * переводит в ResolvePasses.
+     * Передача карт по одному клику: каждый вызов отправляет карты в зону
+     * передачи (взакрытую, ['passed', левый сосед]); когда у игрока набрано
+     * pass_count карт, он становится non-multiactive — часы стоп, пока
+     * остальные выбирают. Отмена до раскрытия: actReturnPassCard (одна
+     * карта, клик по зоне) и actCancelPassCards (все, кнопка Cancel) —
+     * обе с #[CheckAction(false)], т.к. пасанувший уже non-multiactive.
+     * Когда уходит последний активный, фреймворк сам переводит в ResolvePasses.
      */
     #[PossibleAction]
     public function actPassCards(#[IntArrayParam] array $cardIds, int $currentPlayerId, array $args)
     {
         $count = (int)$args['count'];
-        $cardIds = array_map('intval', $cardIds);
-        if (count($cardIds) !== $count || count(array_unique($cardIds)) !== $count) {
-            throw new UserException(clienttranslate('Wrong number of cards'));
+        $cardIds = array_values(array_unique(array_map('intval', $cardIds)));
+        if (count($cardIds) < 1) {
+            throw new UserException(clienttranslate('Choose a card to pass'));
         }
         $done = $this->bga->globals->get('pass_done');
         if (in_array($currentPlayerId, $done, true)) {
             throw new UserException(clienttranslate('You have already passed cards'));
+        }
+        $recipient = $this->game->leftNeighbor($currentPlayerId);
+        // в ['passed', $recipient] лежат только карты правого соседа $recipient
+        // (один отправитель на получателя) — это и есть карты текущего игрока
+        $already = $this->game->cards->getItemsInLocation(['passed', $recipient])->count();
+        if ($already + count($cardIds) > $count) {
+            throw new UserException(clienttranslate('Wrong number of cards'));
         }
         $hand = $this->game->getHand($currentPlayerId);
         foreach ($cardIds as $cardId) {
@@ -60,18 +68,48 @@ class PassCards extends GameState
                 throw new UserException(clienttranslate('Not your card'));
             }
         }
-        $recipient = $this->game->leftNeighbor($currentPlayerId);
         $this->game->cards->moveItems($cardIds, ['passed', $recipient]);
-        $done[] = $currentPlayerId;
-        $this->bga->globals->set('pass_done', $done);
 
-        $this->notify->all('cardsPassed', clienttranslate('${player_name} passed ${count} card(s)'), [
+        if ($already + count($cardIds) === $count) {
+            $done[] = $currentPlayerId;
+            $this->bga->globals->set('pass_done', $done);
+            $this->notify->all('cardsPassed', clienttranslate('${player_name} passed ${count} card(s)'), [
+                'player_id' => $currentPlayerId,
+                'player_name' => $this->game->getPlayerNameById($currentPlayerId),
+                'count' => $count,
+            ]);
+            $this->gamestate->setPlayerNonMultiactive($currentPlayerId, ResolvePasses::class);
+        }
+    }
+
+    /**
+     * Возврат одной переданной карты в руку (клик по карте в зоне передачи).
+     * Возможен и до завершения паса (игрок активен), и после (non-multiactive,
+     * часы стоп, раскрытия ещё нет) — поэтому #[CheckAction(false)] +
+     * checkPossibleAction + собственные проверки. Возврат после завершения
+     * реактивирует игрока (часы снова идут). Клиент шлёт с checkAction:false.
+     */
+    #[PossibleAction]
+    #[CheckAction(false)]
+    public function actReturnPassCard(int $cardId, int $currentPlayerId): void
+    {
+        $this->gamestate->checkPossibleAction('actReturnPassCard');
+        $recipient = $this->game->leftNeighbor($currentPlayerId);
+        $passed = $this->game->cards->getItemsInLocation(['passed', $recipient]);
+        if (!$passed->has($cardId)) {
+            throw new UserException(clienttranslate('No passed card to take back'));
+        }
+        $this->game->cards->moveItems([$cardId], ['hand', $currentPlayerId]);
+        $done = $this->bga->globals->get('pass_done');
+        if (in_array($currentPlayerId, $done, true)) {
+            $this->bga->globals->set('pass_done', array_values(array_diff($done, [$currentPlayerId])));
+            $this->gamestate->setPlayersMultiactive([$currentPlayerId], PassCards::class, false);
+        }
+        $card = $this->game->cards->getItemById($cardId);
+        $this->bga->notify->player($currentPlayerId, 'passCardReturned', clienttranslate('You take back a passed card'), [
             'player_id' => $currentPlayerId,
-            'player_name' => $this->game->getPlayerNameById($currentPlayerId),
-            'count' => $count,
+            'card' => $card,
         ]);
-
-        $this->gamestate->setPlayerNonMultiactive($currentPlayerId, ResolvePasses::class);
     }
 
     /**

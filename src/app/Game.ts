@@ -42,8 +42,7 @@ export class Game {
     myHand: Card[] = [];        // мои карты
     currentTrick: Card[] = [];  // карты текущей взятки
     snakeCards: Record<number, Card[]> = {}; // pid => карты в открытой зоне
-    selectableMode: 'select' | 'play' | null = null; // null | 'select' | 'play'
-    maxSelected = 0;
+    selectableMode: 'play' | 'pass' | null = null; // null | 'play' (розыгрыш) | 'pass' (передача)
     handGridMode = false;
 
     // Виджеты и фичи (состояние внутри них, не на Game)
@@ -215,10 +214,9 @@ export class Game {
         return follow.length > 0 ? follow : [...this.myHand];
     }
 
-    setHandSelectable(cards: Card[], maxSelected: number, singleClickPlay = false): void {
-        this.selectableMode = singleClickPlay ? 'play' : 'select';
-        this.maxSelected = maxSelected;
-        this.handStock.setSelectionMode(singleClickPlay ? 'single' : 'multiple');
+    setHandSelectable(cards: Card[], mode: 'play' | 'pass'): void {
+        this.selectableMode = mode;
+        this.handStock.setSelectionMode('single'); // каждый клик — сразу действие
         this.handStock.setSelectableCards(cards);
     }
 
@@ -234,15 +232,16 @@ export class Game {
             document.getElementById(`stp-card-${c.id}`)
                 ?.classList.toggle('stp-selected', selection.some(s => String(s.id) === String(c.id)));
         }
-        if (this.selectableMode === 'play') {
+        if (this.selectableMode === 'play' || this.selectableMode === 'pass') {
             if (selection.length > 0) {
                 const card = selection[selection.length - 1];
                 this.handStock.unselectAll();
-                this.bga.actions.performAction('actPlayCard', { cardId: parseInt(card.id, 10) });
+                if (this.selectableMode === 'play') {
+                    this.bga.actions.performAction('actPlayCard', { cardId: parseInt(card.id, 10) });
+                } else {
+                    this.passCardsFeature.passOne(normalizeCard(card));
+                }
             }
-        } else if (this.selectableMode === 'select') {
-            const btn = document.getElementById('stp-pass-confirm') as HTMLButtonElement | null;
-            if (btn) btn.disabled = selection.length !== this.maxSelected;
         }
     }
 
@@ -334,7 +333,9 @@ export class Game {
 
     notif_passCountDecided(args: any): void { /* лог в журнале */ }
 
-    notif_cardsPassed(args: any): void { /* лог в журнале; карты придут через newHand */ }
+    notif_cardsPassed(args: any): void { /* лог в журнале; свои карты в зоне уже лежат */ }
+
+    notif_passCardReturned(args: any): void { /* владелец уже оптимистично вернул карту в руку */ }
 
     async notif_passCancelled(args: any): Promise<void> {
         if (parseInt(args.player_id, 10) !== parseInt(this.bga.players.getCurrentPlayerId(), 10)) return;

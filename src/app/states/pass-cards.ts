@@ -1,9 +1,10 @@
 /**
- * Состояние PassCards: одновременная передача карт соседу слева.
- * Пасанувший сразу non-multiactive (часы стоп) — отмена через anytime-
- * действие Game::actCancelPassCards (checkAction:false), которое возвращает
- * игрока в активный набор; хук активации идемпотентно восстанавливает UI.
- * Логика — в features/pass-cards.
+ * Состояние PassCards: одновременная передача карт соседу слева по клику.
+ * Клик по карте руки сразу отправляет её в игровую зону; пас завершён на
+ * count-й карте — сервер делает игрока non-multiactive (часы стоп). Отмена:
+ * клик по карте в зоне (одна) / кнопка Cancel (все) — оба действия с
+ * #[CheckAction(false)], возвращают игрока в активный набор; хук активации
+ * идемпотентно восстанавливает UI. Логика — в features/pass-cards.
  */
 import type { Game } from '../Game';
 
@@ -29,32 +30,31 @@ export class PassCards {
 
     onPlayerActivationChange(args: any, isCurrentPlayerActive: boolean): void {
         // идемпотентно: хуки multiactive могут дублироваться
-        document.getElementById('stp-pass-confirm')?.remove();
         this.game.clearHandSelection();
         const count = parseInt(args.count, 10);
         const toId = this.game.leftNeighborId(this.bga.players.getCurrentPlayerId());
         const feature = this.game.passCardsFeature;
+        const remaining = count - feature.cards.length;
         if (!isCurrentPlayerActive) {
             if (feature.cards.length > 0) {
-                // уже подтвердил пас (в т.ч. после reload) — неактивен, часы
+                // пас завершён (в т.ч. после reload) — неактивен, часы
                 // остановлены; Cancel остаётся доступным
-                feature.ack = true; // карты из gamedatas.passed — пас уже на сервере
                 feature.showWaiting(toId);
             } else {
                 this.bga.statusBar.setTitle(_('Other players are choosing cards to pass'));
                 feature.showInfo(toId, null);
             }
-        } else if (feature.cards.length > 0) {
-            feature.ack = true; // карты из gamedatas.passed — пас уже на сервере
-            feature.showWaiting(toId); // уже подтвердил (reload) — ждём раскрытия
+        } else if (remaining > 0) {
+            // активен: продолжаем передачу — клик по карте руки отправляет её,
+            // карты в зоне кликабельны для возврата (в т.ч. после reload)
+            feature.showSelection(remaining, toId);
         } else {
-            feature.restore(); // отмена: карты возвращаются из зоны передачи в руку
-            feature.showSelection(count, toId);
+            // гонка: сервер уже принял count карт, но флаг активности ещё не пришёл
+            feature.showWaiting(toId);
         }
     }
 
     onLeavingState(args: any, isCurrentPlayerActive: boolean): void {
-        document.getElementById('stp-pass-confirm')?.remove();
         this.game.passCardsFeature.removeInfo();
         this.game.clearHandSelection();
         this.game.passCardsFeature.discard(); // карты ушли получателям — зона больше не нужна

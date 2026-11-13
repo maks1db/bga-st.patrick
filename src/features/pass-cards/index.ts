@@ -1,22 +1,27 @@
 /**
- * Feature: одновременная передача карт соседу слева.
- * Подтвердивший пас сразу становится non-multiactive (часы останавливаются)
- * — отмена остаётся возможной: actCancelPassCards в состоянии PassCards
- * с #[CheckAction(false)] (серверная проверка активности снята; клиент шлёт
- * с checkAction:false). Хук активации не срабатывает при подтверждении:
- * клиент сам переключает UI в режим ожидания.
- * Владелец состояния: подтверждённые карты (cards) и флаг ack живут здесь.
+ * Feature: одновременная передача карт соседу слева — по одному клику.
+ * Клик по карте руки сразу отправляет её в игровую зону (#stp-pass-cards
+ * внутри #stp-trick); пас завершён, когда набрано `count` карт — сервер делает
+ * игрока non-multiactive (часы стоп). Клик по карте в зоне возвращает её в
+ * руку (actReturnPassCard), кнопка Cancel в status bar — все сразу
+ * (actCancelPassCards); оба действия с #[CheckAction(false)] — пасанувший уже
+ * non-multiactive, клиент шлёт с checkAction:false. Переносы оптимистичны:
+ * анимация сразу, при ошибке вызова — откат. Хук активации при подтверждении
+ * не срабатывает: клиент сам переключает UI в режим ожидания.
+ * Владелец состояния: карты в зоне и сет ожидающих ack живут здесь.
  */
-import { normalizeCard, sortHand } from '../../entities/card';
+import { sortHand } from '../../entities/card';
 import type { Card } from '../../entities/card';
 import type { Game } from '../../app/Game';
 
 export class PassCardsFeature {
     private game: Game;
-    /** мои подтверждённые карты в зоне передачи (ждут раскрытия) */
+    /** мои карты в зоне передачи (ждут раскрытия; уходят получателю) */
     cards: Card[] = [];
-    /** пас подтверждён сервером (кнопка Cancel разрешена) */
-    ack = false;
+    /** требуемое число карт к передаче (для остатка в тайтле/баннере) */
+    count = 0;
+    /** карты, чей серверный вызов ещё летит (Cancel ждёт их) */
+    private pending = new Set<number>();
 
     constructor(game: Game) {
         this.game = game;
@@ -27,50 +32,110 @@ export class PassCardsFeature {
         this.cards = passed;
     }
 
-    async confirmSelection(count: number): Promise<void> {
-        const selection = this.game.handStock.getSelection();
-        if (selection.length !== count) return;
-        const cards = selection.map((c: Card) => normalizeCard(c));
-        document.getElementById('stp-pass-confirm')?.remove();
-        this.cards = [...cards];
-        this.game.myHand = this.game.myHand.filter(c => !cards.some((p: Card) => p.id === c.id));
-        this.game.handStock.unselectAll();
-        for (const c of cards) {
-            document.getElementById(`stp-card-${c.id}`)?.classList.remove('stp-selected');
-        }
+    /** Клик по карте руки: карта сразу уезжает в зону передачи. */
+    async passOne(card: Card): Promise<void> {
+        if (this.cards.some(c => c.id === card.id) || this.pending.has(card.id)) return;
+        this.pending.add(card.id);
+        this.cards = [...this.cards, card];
+        this.game.myHand = this.game.myHand.filter(c => c.id !== card.id);
+        document.getElementById(`stp-card-${card.id}`)?.classList.remove('stp-selected');
         this.syncZone(); // зона видима ДО анимации: иначе цель display:none и карта летит в (0,0)
-        await this.game.passStock.addCards(cards, { fromStock: this.game.handStock });
-        this.showWaiting(this.game.leftNeighborId(this.game.bga.players.getCurrentPlayerId()));
-        const p = this.game.bga.actions.performAction('actPassCards', { cardIds: cards.map((c: Card) => c.id) });
+        await this.game.passStock.addCards([card], { fromStock: this.game.handStock });
+        const p = this.game.bga.actions.performAction('actPassCards', { cardIds: [card.id] });
         if (!p) { // вызов заблокирован фреймворком — откатываем перенос
-            await this.restore();
-            this.showSelection(count, this.game.leftNeighborId(this.game.bga.players.getCurrentPlayerId()));
+            this.pending.delete(card.id);
+            await this.rollbackPass(card);
             return;
         }
         try {
             await p;
-            this.ack = true; // сервер принял пас — теперь отмена легальна
-            this.syncZone();
         } catch (e) {
-            await this.restore();
-            if (this.game.bga.states.getCurrentMainStateName() === 'PassCards') {
-                this.showSelection(count, this.game.leftNeighborId(this.game.bga.players.getCurrentPlayerId()));
-            }
+            this.pending.delete(card.id);
+            await this.rollbackPass(card);
+            return;
+        }
+        this.pending.delete(card.id);
+        this.syncZone();
+        const toId = this.game.leftNeighborId(this.game.bga.players.getCurrentPlayerId());
+        if (this.cards.length >= this.count) {
+            this.showWaiting(toId); // пас завершён — ждём раскрытия (сервер уже дал non-multiactive)
+        } else {
+            this.refreshSelection(this.count - this.cards.length, toId);
         }
     }
 
-    /** Режим выбора карт для передачи (активный игрок). */
-    showSelection(count: number, toId: number | null): void {
-        this.game.bga.statusBar.setTitle(_('${you} must select ${count} card(s) to pass to your left neighbor').replace('${count}', String(count)));
-        this.game.setHandSelectable(this.game.myHand, count);
-        this.showInfo(toId, count);
-        document.getElementById('stp-pass-confirm')?.remove();
-        this.game.bga.statusBar.addActionButton(_('Pass selected cards'),
-            () => this.confirmSelection(count),
-            { id: 'stp-pass-confirm', disabled: true });
+    /** Клик по карте в зоне передачи: возвращается в руку. */
+    async returnOne(card: Card): Promise<void> {
+        if (!this.cards.some(c => c.id === card.id) || this.pending.has(card.id)) return;
+        this.pending.add(card.id);
+        this.cards = this.cards.filter(c => c.id !== card.id);
+        this.game.myHand = sortHand([...this.game.myHand, card]);
+        this.syncZone();
+        await this.game.passStock.removeCards([card]);
+        await this.game.handStock.addCards([card]);
+        if (this.game.selectableMode === 'pass') {
+            this.game.handStock.setSelectableCards(this.game.myHand); // карта доехала — повторяем маркировку
+        }
+        const p = this.game.bga.actions.performAction('actReturnPassCard', { cardId: card.id },
+            { checkAction: false, checkPossibleActions: true });
+        if (!p) {
+            this.pending.delete(card.id);
+            await this.rollbackReturn(card);
+            return;
+        }
+        try {
+            await p;
+        } catch (e) {
+            this.pending.delete(card.id);
+            await this.rollbackReturn(card);
+            return;
+        }
+        this.pending.delete(card.id);
+        this.syncZone();
+        if (this.game.selectableMode === 'pass') {
+            this.refreshSelection(this.count - this.cards.length,
+                this.game.leftNeighborId(this.game.bga.players.getCurrentPlayerId()));
+        }
     }
 
-    /** Режим ожидания раскрытия: карты в зоне передачи, под ними — отмена. */
+    /** Откат passOne: карта возвращается из зоны в руку. */
+    private async rollbackPass(card: Card): Promise<void> {
+        this.cards = this.cards.filter(c => c.id !== card.id);
+        this.game.myHand = sortHand([...this.game.myHand, card]);
+        await this.game.passStock.removeCards([card]);
+        await this.game.handStock.addCards([card]);
+        if (this.game.selectableMode === 'pass') {
+            this.game.handStock.setSelectableCards(this.game.myHand);
+        }
+        this.syncZone();
+    }
+
+    /** Откат returnOne: карта снова уезжает в зону передачи. */
+    private async rollbackReturn(card: Card): Promise<void> {
+        this.cards = [...this.cards, card];
+        this.game.myHand = this.game.myHand.filter(c => c.id !== card.id);
+        this.syncZone();
+        await this.game.passStock.addCards([card], { fromStock: this.game.handStock });
+        this.syncZone();
+    }
+
+    /** Режим передачи (активный игрок): клик по карте = отправка, кнопки
+     * подтверждения нет — пас завершается сам на count-й карте. */
+    showSelection(count: number, toId: number | null): void {
+        this.count = count;
+        this.refreshSelection(count, toId);
+        this.game.setHandSelectable(this.game.myHand, 'pass');
+        this.syncZone();
+    }
+
+    /** Тайтл и баннер по остатку к передаче. */
+    private refreshSelection(remaining: number, toId: number | null): void {
+        this.game.bga.statusBar.setTitle(_('${you} must pass ${count} more card(s) — click a card to send it')
+            .replace('${count}', String(remaining)));
+        this.showInfo(toId, remaining);
+    }
+
+    /** Режим ожидания раскрытия: карты в зоне передачи, отмена — Cancel. */
     showWaiting(toId: number | null): void {
         this.game.bga.statusBar.setTitle(_('You passed ${count} card(s) — waiting for the other players').replace('${count}', String(this.cards.length)));
         this.showInfo(toId, null);
@@ -78,17 +143,27 @@ export class PassCardsFeature {
     }
 
     /** Зона передачи: карты лежат в основной игровой зоне (#stp-trick).
-     * Кнопка Cancel — в верхней панели (status bar), только после
-     * подтверждения паса сервером: иначе отмена улетает раньше actPassCards
-     * и сервер честно отвечает ошибкой, а клик во время анимации перелёта
-     * роняет removeCards против addCards. */
+     * Кнопка Cancel — в верхней панели (status bar); рисуется, когда в зоне
+     * есть карты и ни один вызов ещё не летит (иначе отмена улетит раньше
+     * отправки и сервер честно ответит ошибкой). Карты в зоне кликабельны:
+     * клик возвращает карту в руку. */
     syncZone(): void {
         const box = document.getElementById('stp-pass-cards');
         if (!box) return;
+        if (!box.dataset.stpBound) {
+            box.dataset.stpBound = '1';
+            box.addEventListener('click', (e) => {
+                const el = (e.target as HTMLElement).closest('.stp-card');
+                if (!el) return;
+                const id = parseInt(el.id.replace('stp-card-', ''), 10);
+                const card = this.cards.find(c => c.id === id);
+                if (card) this.returnOne(card);
+            });
+        }
         const has = this.cards.length > 0;
         box.classList.toggle('stp-visible', has);
         document.getElementById('stp-pass-cancel')?.remove();
-        if (has && this.ack) {
+        if (has && this.pending.size === 0) {
             this.game.bga.statusBar.addActionButton(_('Cancel'), () => this.cancel(), { id: 'stp-pass-cancel', color: 'secondary' });
         }
     }
@@ -107,13 +182,13 @@ export class PassCardsFeature {
     /** Отмена подтверждения: карты возвращаются из зоны передачи в руку (идемпотентно). */
     async restore(): Promise<void> {
         const cards = this.cards;
-        this.ack = false;
+        this.pending.clear();
         if (!cards.length || !this.game.passStock) { this.syncZone(); return; }
         this.cards = [];
         this.game.myHand = sortHand([...this.game.myHand, ...cards]);
         await this.game.passStock.removeCards(cards);
         await this.game.handStock.addCards(cards);
-        if (this.game.selectableMode === 'select') {
+        if (this.game.selectableMode === 'pass') {
             this.game.handStock.setSelectableCards(this.game.myHand); // карты доехали — повторяем маркировку
         }
         this.syncZone();
@@ -123,7 +198,7 @@ export class PassCardsFeature {
     async discard(): Promise<void> {
         const cards = this.cards;
         this.cards = [];
-        this.ack = false;
+        this.pending.clear();
         this.syncZone();
         if (!cards.length || !this.game.passStock) return;
         await this.game.passStock.removeCards(cards);
@@ -139,7 +214,7 @@ export class PassCardsFeature {
         const name = `<b style="color:#${to.color}">${to.name}</b>`;
         const text = count === null
             ? _('Cards will be passed to your left neighbor: ${name}').replace('${name}', name)
-            : _('You pass ${count} card(s) to ${name}').replace('${count}', String(count)).replace('${name}', name);
+            : _('Pass ${count} more card(s) to ${name}').replace('${count}', String(count)).replace('${name}', name);
         box.insertAdjacentHTML('afterbegin', `<div id="stp-pass-info" class="stp-pass-info">${text}</div>`);
     }
 

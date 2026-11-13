@@ -172,6 +172,17 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   display: flex;
 }
 
+/* Карты в зоне передачи кликабельны: клик возвращает карту в руку.
+   Лёгкий подъём при наведении намекает на интерактивность. */
+#stp-pass-cards .stp-card {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+#stp-pass-cards .stp-card:hover {
+  transform: translateY(-6px);
+}
+
 /* Пульс выигравшей карты взятки: небольшое увеличение/уменьшение
    во время паузы перед разрешением взятки (notif_trickWon). */
 @keyframes stp-trick-win-pulse {

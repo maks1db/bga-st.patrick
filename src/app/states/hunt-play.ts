@@ -24,7 +24,7 @@ export class HuntPlay {
             this.bga.statusBar.setTitle(leadSuit === null
                 ? _('${you} must lead a trick — play any card')
                 : _('${you} must follow the lead suit (${suit})').replace('${suit}', suitName(leadSuit)));
-            this.game.setHandSelectable(legal, 1, true);
+            this.game.setHandSelectable(legal, 'play');
         } else {
             this.bga.statusBar.setTitle(_('${actplayer} must play a card'));
         }
