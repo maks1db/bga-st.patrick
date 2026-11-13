@@ -350,6 +350,35 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   font-weight: bold;
 }
 
+#stp-special-hunt {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stp-sh-body {
+  max-width: 460px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8666666667);
+}
+
+.stp-sh-body p {
+  margin: 4px 0 10px;
+}
+
+.stp-sh-body ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.stp-sh-body li {
+  margin: 4px 0;
+}
+
 #stp-hand {
   display: flex;
   justify-content: center;

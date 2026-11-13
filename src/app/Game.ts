@@ -8,6 +8,7 @@
  *   widgets/trick          — подписи «кто сыграл» в взятке
  *   widgets/snake-zones    — открытые змеиные карты, счётчики укусов
  *   widgets/round-summary  — итоговая таблица раунда
+ *   widgets/special-hunt   — информационное окно особой охоты
  *   features/pass-cards    — передача карт (состояние cards/ack там)
  */
 import { BgaAnimations, BgaCards } from '../shared/lib/bga';
@@ -18,6 +19,7 @@ import { DraftOverlayWidget } from '../widgets/draft-overlay';
 import { labelTrickCard, clearTrickLabels } from '../widgets/trick';
 import { layoutSnakeZone, updateBites } from '../widgets/snake-zones';
 import { showRoundSummary } from '../widgets/round-summary';
+import { showSpecialHuntModal } from '../widgets/special-hunt';
 import { PassCardsFeature } from '../features/pass-cards';
 import { DecidePassCount } from './states/decide-pass-count';
 import { PassCards } from './states/pass-cards';
@@ -356,7 +358,10 @@ export class Game {
         }
     }
 
-    notif_specialHunt(args: any): void { /* реликвии остаются у игроков [H5] */ }
+    notif_specialHunt(args: any): void {
+        // реликвии остаются у игроков [H5]; показываем информационное окно
+        showSpecialHuntModal();
+    }
 
     async notif_cardPlayed(args: any): Promise<void> {
         const card = this.normalizeCard(args.card);
