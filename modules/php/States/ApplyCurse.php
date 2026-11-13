@@ -31,14 +31,22 @@ class ApplyCurse extends GameState
                 $this->bga->playerScore->inc($pid, -$losses[$pid]);
             }
         }
+        $cycles = (int)$this->bga->globals->get('pass_cycles') + 1;
+        $special = $cycles >= $this->game->getPlayersNumber() - 1;
+        // Счётчики реликвий ПОСЛЕ проклятия: обычно реликвии уходят в центр
+        // (0 у игроков), при особой охоте остаются у владельцев [H5]
+        $relicsLeft = [];
+        foreach ($this->game->playerIds() as $pid) {
+            $relicsLeft[$pid] = $special ? $losses[$pid] : 0;
+        }
         $this->notify->all('curse', clienttranslate('The relics become a curse!'), [
             'losses' => $losses,
+            'relics' => $relicsLeft,
         ]);
 
-        $cycles = (int)$this->bga->globals->get('pass_cycles') + 1;
         $this->bga->globals->set('pass_cycles', $cycles);
 
-        if ($cycles >= $this->game->getPlayersNumber() - 1) {
+        if ($special) {
             // Особая охота: игроки оставляют реликвии и последние карты [H5, H6]
             $this->bga->globals->set('special_hunt', true);
             $this->bga->globals->set('trick_plays', []);

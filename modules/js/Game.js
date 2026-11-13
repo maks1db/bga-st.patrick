@@ -1069,8 +1069,10 @@ class Game {
     }
     notif_relicsPassed(args) { }
     notif_curse(args) {
+        // реликвии после проклятия: 0 (ушли в центр) или у игроков при особой охоте [H5]
+        const relics = args.relics ?? {};
         for (const pid of Object.keys(args.losses)) {
-            this.updatePlayerRelics(parseInt(pid, 10), 0);
+            this.updatePlayerRelics(parseInt(pid, 10), parseInt(String(relics[pid] ?? 0), 10));
         }
     }
     notif_specialHunt(args) {
