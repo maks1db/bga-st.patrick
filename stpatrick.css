@@ -601,7 +601,7 @@ body.stp-draft-open #stp-hand {
    и не давит на экран. Не влезает — оверлей скроллится. */
 @media (max-width: 994px) {
   .stp-chest.stp-draft-chest {
-    width: min(900px, 80%);
+    width: min(900px, 65%);
   }
 }
 .stp-draft-relics {
@@ -630,7 +630,7 @@ body.stp-draft-open #stp-hand {
 .stp-take-stepper {
   position: absolute;
   left: 50%;
-  top: calc(32% - 160px);
+  top: calc(32% - 100px);
   transform: translate(-50%, -50%);
   z-index: 5;
   display: flex;

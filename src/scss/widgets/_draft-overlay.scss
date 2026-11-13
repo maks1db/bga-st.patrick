@@ -113,7 +113,7 @@
    и не давит на экран. Не влезает — оверлей скроллится. */
 @media (max-width: $bp-grid) {
     .stp-chest.stp-draft-chest {
-        width: min($chest-max, 80%);
+        width: min($chest-max, 65%);
     }
 }
 
@@ -141,7 +141,7 @@
 .stp-take-stepper {
     position: absolute;
     left: 50%;
-    top: calc(32% - 160px);
+    top: calc(32% - 100px);
     transform: translate(-50%, -50%);
     z-index: 5;
     display: flex;
