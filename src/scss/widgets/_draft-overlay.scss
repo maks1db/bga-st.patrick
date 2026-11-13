@@ -67,14 +67,17 @@
     transition: opacity 0.5s ease 0.3s;
 }
 
-/* Десктоп: «Remaining» — в строку заголовка (справа сверху): в потоке его
-   отступ съедает ~100px вертикали, ларец получается мелким. */
+/* Десктоп: «Remaining» — под заголовком (центр, вне потока): в потоке его
+   отступ съедает ~100px вертикали, ларец получается мелким; справа вверху —
+   налезало бы на заголовок на узких окнах (995–1100px). */
 @media (min-width: ($bp-grid + 1px)) {
     .stp-draft-remaining {
         position: absolute;
-        top: 22px;
-        right: 24px;
+        top: 58px;
+        left: 50%;
+        transform: translateX(-50%);
         margin-top: 0;
+        white-space: nowrap;
     }
 }
 
