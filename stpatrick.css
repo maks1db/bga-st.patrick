@@ -623,16 +623,25 @@ body.stp-draft-open #stp-hand {
   opacity: 0;
 }
 
-/* Степпер (−/+) драфтера — НА КРЫШКЕ ларца: absolute внутри .stp-chest
-   (position: relative), вне потока — появление/исчезновение по ходу драфта
-   не двигает раскладку. Крышка с ручкой — верхняя треть изображения
-   (жетоны лежат на подкладке ниже, 54–76%). */
+/* Степпер (−/+) драфтера — в слоте ПОД областями игроков (над ларцом).
+   Высота слота фиксирована, степпер absolute внутри: его появление/
+   исчезновение по ходу драфта не влияет на раскладку — ларец не ресайзится. */
+.stp-draft-controls-slot {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 10px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 50px;
+  flex: 0 0 auto;
+}
+
 .stp-take-stepper {
   position: absolute;
   left: 50%;
-  top: calc(32% - 100px);
+  top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 5;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -652,6 +661,13 @@ body.stp-draft-open #stp-hand {
   flex-wrap: wrap;
 }
 
+/* Десктоп: заголовок и «Remaining» — absolute над областями игроков —
+   оттолкнём область вниз, чтобы не налезали друг на друга. */
+@media (min-width: 995px) {
+  #stp-draft-overlay.stp-placed .stp-draft-players {
+    margin-top: 88px;
+  }
+}
 .stp-draft-player {
   display: flex;
   flex-direction: column;

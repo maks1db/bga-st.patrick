@@ -45,6 +45,7 @@ export class DraftOverlayWidget {
                 <div class="stp-draft-title"><span class="stp-draft-title-text">${_('Relic Draft')}</span></div>
                 <div class="stp-draft-remaining">${_('Remaining:')} <span id="stp-draft-remaining-n">${center}</span></div>
                 <div class="stp-draft-players">${playersRow}</div>
+                <div class="stp-draft-controls-slot" id="stp-draft-controls-slot"></div>
                 <div class="stp-draft-chest-wrap">
                     <div class="stp-chest stp-draft-chest" id="stp-draft-chest">
                         <div class="stp-draft-relics" id="stp-draft-chest-relics"></div>
@@ -220,17 +221,16 @@ export class DraftOverlayWidget {
         }
     }
 
-    /** Управление драфтера (только активный): степпер −/+ — НА КРЫШКЕ
-     *  ларца (absolute внутри .stp-chest, вне потока — его появление/
-     *  исчезновение не влияет на раскладку), кнопки «Take»/«Pass» — в
-     *  верхней панели (status bar) через addActionButton (Take — primary,
-     *  Pass — secondary). */
+    /** Управление драфтера (только активный): степпер −/+ — в слоте ПОД
+     *  областями игроков (над ларцом), вне потока картинки: высота слота
+     *  фиксирована, появление/исчезновение степпера не двигает раскладку.
+     *  Кнопки «Take»/«Pass» — в верхней панели (status bar). */
     private mountControls(center: number, isCurrentPlayerActive: boolean): void {
         ['stp-draft-stepper', 'stp-take-relics', 'stp-pass-relics'].forEach(id => document.getElementById(id)?.remove());
         if (!isCurrentPlayerActive) return;
-        const chest = document.getElementById('stp-draft-chest');
-        if (!chest) return;
-        chest.insertAdjacentHTML('beforeend', `
+        const slot = document.getElementById('stp-draft-controls-slot');
+        if (!slot) return;
+        slot.insertAdjacentHTML('beforeend', `
             <div class="stp-take-stepper" id="stp-draft-stepper">
                 <button class="stp-step-btn" id="stp-step-down" type="button">−</button>
                 <span class="stp-step-value" id="stp-step-value">1</span>
