@@ -15,6 +15,14 @@ export function updateBites(game: Game, pid: number): void {
     box.style.display = total > 0 ? '' : 'none';
 }
 
+/** Вложенный сток зоны змей прячем на время добавления карт: новые карты
+ *  приземляются в него и до перегруппировки в ряды (layoutSnakeZone)
+ *  мелькают вертикальной колонкой (сток — flex-direction: column). */
+export function setSnakeStockHidden(pid: number, hidden: boolean): void {
+    document.getElementById(`stp-snakes-${pid}`)?.querySelector('.card-stock')
+        ?.classList.toggle('stp-snakes-flight', hidden);
+}
+
 /** Зона змей: сортировка (масть, номинал), ряды по 6 карт; новые ряды
  *  перекрывают предыдущие (CSS: margin-top отрицательный), внутри ряда
  *  ранние карты лежат поверх поздних (видна левая полоса с номиналом). */

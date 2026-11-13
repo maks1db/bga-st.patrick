@@ -361,6 +361,13 @@ function updateBites(game, pid) {
     n.textContent = String(total);
     box.style.display = total > 0 ? '' : 'none';
 }
+/** Вложенный сток зоны змей прячем на время добавления карт: новые карты
+ *  приземляются в него и до перегруппировки в ряды (layoutSnakeZone)
+ *  мелькают вертикальной колонкой (сток — flex-direction: column). */
+function setSnakeStockHidden(pid, hidden) {
+    document.getElementById(`stp-snakes-${pid}`)?.querySelector('.card-stock')
+        ?.classList.toggle('stp-snakes-flight', hidden);
+}
 /** Зона змей: сортировка (масть, номинал), ряды по 6 карт; новые ряды
  *  перекрывают предыдущие (CSS: margin-top отрицательный), внутри ряда
  *  ранние карты лежат поверх поздних (видна левая полоса с номиналом). */
@@ -971,8 +978,12 @@ class Game {
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
+                setSnakeStockHidden(pid, true); // не мелькать вертикальной колонкой до раскладки
                 this.snakeStocks[pid].addCards(this.snakeCards[pid]);
-                setTimeout(() => layoutSnakeZone(this, pid), 600); // после отрисовки стока
+                setTimeout(() => {
+                    layoutSnakeZone(this, pid); // после отрисовки стока
+                    setSnakeStockHidden(pid, false);
+                }, 600);
             }
         }
         this.bga.notifications.setupPromiseNotifications();
@@ -1182,6 +1193,7 @@ class Game {
         const flights = [];
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
+            setSnakeStockHidden(winnerId, true); // не мелькать вертикальной колонкой до раскладки
             flights.push(this.snakeStocks[winnerId].addCards(snakeCards, { fromStock: this.trickStock }));
         }
         // Безвредные карты тоже летят к победителю (в его зону) с затуханием —
@@ -1195,6 +1207,7 @@ class Game {
         this.currentTrick = [];
         clearTrickLabels();
         layoutSnakeZone(this, winnerId);
+        setSnakeStockHidden(winnerId, false);
     }
     async notif_huntEnded(args) {
         // Досрочный конец охоты [H16]: сервер сбросил оставшиеся карты —
