@@ -99,7 +99,6 @@ class DraftOverlayWidget {
             <div id="stp-draft-overlay">
                 <div class="stp-draft-title"><span class="stp-draft-title-text">${_('Relic Draft')}</span></div>
                 <div class="stp-draft-remaining">${_('Remaining:')} <span id="stp-draft-remaining-n">${center}</span></div>
-                <div class="stp-draft-controls-slot" id="stp-draft-controls-slot"></div>
                 <div class="stp-draft-players">${playersRow}</div>
                 <div class="stp-draft-chest-wrap">
                     <div class="stp-chest stp-draft-chest" id="stp-draft-chest">
@@ -280,18 +279,19 @@ class DraftOverlayWidget {
             setTimeout(() => token.remove(), 400);
         }
     }
-    /** Управление драфтера (только активный): степпер −/+ — над ларцом
-     *  (absolute поверх слота фиксированной высоты — исчезновение степпера
-     *  не влияет на раскладку), кнопки «Take»/«Pass» — в верхней панели
-     *  (status bar) через addActionButton (Take — primary, Pass — secondary). */
+    /** Управление драфтера (только активный): степпер −/+ — НА КРЫШКЕ
+     *  ларца (absolute внутри .stp-chest, вне потока — его появление/
+     *  исчезновение не влияет на раскладку), кнопки «Take»/«Pass» — в
+     *  верхней панели (status bar) через addActionButton (Take — primary,
+     *  Pass — secondary). */
     mountControls(center, isCurrentPlayerActive) {
         ['stp-draft-stepper', 'stp-take-relics', 'stp-pass-relics'].forEach(id => document.getElementById(id)?.remove());
         if (!isCurrentPlayerActive)
             return;
-        const slot = document.getElementById('stp-draft-controls-slot');
-        if (!slot)
+        const chest = document.getElementById('stp-draft-chest');
+        if (!chest)
             return;
-        slot.insertAdjacentHTML('beforeend', `
+        chest.insertAdjacentHTML('beforeend', `
             <div class="stp-take-stepper" id="stp-draft-stepper">
                 <button class="stp-step-btn" id="stp-step-down" type="button">−</button>
                 <span class="stp-step-value" id="stp-step-value">1</span>

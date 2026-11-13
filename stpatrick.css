@@ -622,25 +622,16 @@ body.stp-draft-open #stp-hand {
   opacity: 0;
 }
 
-.stp-draft-controls-slot {
-  width: 100%;
-  max-width: 420px;
-  margin-top: 10px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  /* Степпер драфтера — над ларцом (кнопки Take/Pass — в status bar).
-     Высота слота ФИКСИРОВАННАЯ, степпер лежит поверх (absolute): его
-     появление/исчезновение по ходу драфта не влияет на раскладку —
-     ларец не ресайзится. */
-  height: 50px;
-}
-
+/* Степпер (−/+) драфтера — НА КРЫШКЕ ларца: absolute внутри .stp-chest
+   (position: relative), вне потока — появление/исчезновение по ходу драфта
+   не двигает раскладку. Крышка с ручкой — верхняя треть изображения
+   (жетоны лежат на подкладке ниже, 54–76%). */
 .stp-take-stepper {
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 32%;
   transform: translate(-50%, -50%);
+  z-index: 5;
   display: flex;
   align-items: center;
   gap: 4px;
