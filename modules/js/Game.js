@@ -219,12 +219,18 @@ class DraftOverlayWidget {
      * rect'ам карт и прибавляем к низу оверлея (делим на page-zoom, т.к.
      * offsetHeight в layout-пикселях, а rect — в визуальных).
      * Заодно вписываем ларец в остаток высоты оверлея (--stp-draft-chest-size),
-     * иначе при поднятом низе ларец обрезался бы оверлеем (overflow: auto). */
+     * иначе при поднятом низе ларец обрезался бы оверлеем (overflow: auto).
+     * Узкий экран (≤994px, рука-сетка): низ НЕ поднимаем — оверлей на всю
+     * высоту поля, рука перекрывает его низ; так нет вертикального скролла. */
     syncBottom() {
         const overlay = document.getElementById('stp-draft-overlay');
         const hand = document.getElementById('stp-hand');
         if (!overlay || !hand)
             return;
+        if (window.innerWidth <= 994) {
+            overlay.style.setProperty('--stp-draft-bottom', '0px');
+            return;
+        }
         const handRect = hand.getBoundingClientRect();
         const zoom = hand.offsetHeight ? handRect.height / hand.offsetHeight : 1;
         let overflow = 0;
