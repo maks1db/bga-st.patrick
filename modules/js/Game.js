@@ -281,9 +281,9 @@ class DraftOverlayWidget {
         }
     }
     /** Управление драфтера (только активный): степпер −/+ — над ларцом
-     *  (слот в оверлее), кнопки «Take»/«Pass» — в верхней панели (status bar)
-     *  через addActionButton (Take — primary, Pass — secondary). Слот держит
-     *  резерв высоты под ларец (см. _draft-overlay.scss). */
+     *  (absolute поверх слота фиксированной высоты — исчезновение степпера
+     *  не влияет на раскладку), кнопки «Take»/«Pass» — в верхней панели
+     *  (status bar) через addActionButton (Take — primary, Pass — secondary). */
     mountControls(center, isCurrentPlayerActive) {
         ['stp-draft-stepper', 'stp-take-relics', 'stp-pass-relics'].forEach(id => document.getElementById(id)?.remove());
         if (!isCurrentPlayerActive)
@@ -313,11 +313,6 @@ class DraftOverlayWidget {
         this.game.bga.statusBar.addActionButton(_('Take'), () => this.game.bga.actions.performAction('actTakeRelics', { count: parseInt(valueEl.textContent ?? '1', 10) }), { id: 'stp-take-relics' });
         this.game.bga.statusBar.addActionButton(_('Pass'), () => this.game.bga.actions.performAction('actPassRelics'), { id: 'stp-pass-relics', color: 'secondary' });
         sync();
-        // Резерв высоты слота: степпер монтируется/исчезает по ходу драфта —
-        // пинним фактическую высоту, ларец не ресайзится (_draft-overlay.scss)
-        const overlay = document.getElementById('stp-draft-overlay');
-        if (overlay)
-            overlay.style.setProperty('--stp-draft-controls-h', slot.offsetHeight + 'px');
     }
 }
 

@@ -552,6 +552,16 @@ body.stp-draft-open #stp-hand {
   transition: opacity 0.5s ease 0.3s;
 }
 
+/* Десктоп: «Remaining» — в строку заголовка (справа сверху): в потоке его
+   отступ съедает ~100px вертикали, ларец получается мелким. */
+@media (min-width: 995px) {
+  .stp-draft-remaining {
+    position: absolute;
+    top: 22px;
+    right: 24px;
+    margin-top: 0;
+  }
+}
 #stp-draft-overlay.stp-placed .stp-draft-remaining {
   opacity: 1;
 }
@@ -560,7 +570,7 @@ body.stp-draft-open #stp-hand {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 8px;
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
@@ -577,7 +587,7 @@ body.stp-draft-open #stp-hand {
      лёгкий апскейл допустим), 96% — почти вся ширина поля на мобильном,
      floor $chest-min — минимальная высота стола с ларцом (не влезает —
      оверлей скроллится). */
-  width: max(300px, min(720px, 96%, var(--stp-draft-chest-size, 100vh)));
+  width: max(300px, min(900px, 96%, var(--stp-draft-chest-size, 100vh)));
   height: auto;
   aspect-ratio: 1/1;
 }
@@ -587,7 +597,7 @@ body.stp-draft-open #stp-hand {
    скроллится. */
 @media (max-width: 994px) {
   .stp-chest.stp-draft-chest {
-    width: min(720px, 96%);
+    width: min(900px, 96%);
   }
 }
 .stp-draft-relics {
@@ -612,17 +622,22 @@ body.stp-draft-open #stp-hand {
 .stp-draft-controls-slot {
   width: 100%;
   max-width: 420px;
-  margin-top: 16px;
+  margin-top: 10px;
+  position: relative;
   display: flex;
   justify-content: center;
   /* Степпер драфтера — над ларцом (кнопки Take/Pass — в status bar).
-     min-height — резерв: высоту пиннит JS при монтировании степпера
-     (--stp-draft-controls-h) — ларец не ресайзится, когда степпер
-     появляется/исчезает по ходу драфта. */
-  min-height: var(--stp-draft-controls-h, 50px);
+     Высота слота ФИКСИРОВАННАЯ, степпер лежит поверх (absolute): его
+     появление/исчезновение по ходу драфта не влияет на раскладку —
+     ларец не ресайзится. */
+  height: 50px;
 }
 
 .stp-take-stepper {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -638,7 +653,7 @@ body.stp-draft-open #stp-hand {
   display: flex;
   justify-content: center;
   gap: 24px;
-  margin-top: 12px;
+  margin-top: 8px;
   flex-wrap: wrap;
 }
 
