@@ -461,11 +461,16 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
     background: none !important;
   }
 }
-/* В фазе разбора реликвий рука УХОДИТ ПОД чёрный оверлей (решение 13.11):
-   ларец полного размера, его низ с реликвиями не должен перекрываться
-   картами. Класс stp-draft-open ставит DraftOverlayWidget. На десктопе
-   низ оверлея и так поднят выше руки (syncBottom) — карты остаются видны
-   под оверлеем; на мобильном (оверлей на всю высоту) рука скрыта. */
+/* В фазе разбора реликвий рука показывается ПОВЕРХ чёрного оверлея: и карты
+   видны, и ларец — он по геометрии выше руки (на десктопе низ оверлея
+   поднят по руке syncBottom'ом, на мобильном ларец 96% ширины встаёт
+   выше сетки руки на типовых экранах). Класс stp-draft-open ставит
+   DraftOverlayWidget, z-index выше оверлея (950). */
+body.stp-draft-open #stp-hand {
+  position: relative;
+  z-index: 960;
+}
+
 /* В фазе драфта рука мельче — ТОЛЬКО до 995px (на десктопе веер полного
    размера). Масштаб ВСЕГО стока (карты + геометрия веера) к нижнему краю:
    в отличие от zoom по картам, ужимается и свес веера над контейнером —
@@ -626,7 +631,7 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
 .stp-take-stepper {
   position: absolute;
   left: 50%;
-  top: calc(32% - 60px);
+  top: calc(32% - 160px);
   transform: translate(-50%, -50%);
   z-index: 5;
   display: flex;
