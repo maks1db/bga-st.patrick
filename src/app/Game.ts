@@ -403,6 +403,14 @@ export class Game {
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
             setSnakeStockHidden(winnerId, true); // не мелькать вертикальной колонкой до раскладки
+            // NB: bga-animations на время slide переносит карты в body-level
+            // .bga-animations_animation-surface — opacity самой зоны на них
+            // НЕ действует (карта покидает поддерево зоны). Прячем сами
+            // карты: класс живёт на элементе и вне зоны. Снимается после
+            // раскладки — карты плавно проявляются уже в рядах.
+            for (const c of snakeCards) {
+                this.cardsManager.getCardElement(c)?.classList.add('stp-snake-flight');
+            }
             flights.push(this.snakeStocks[winnerId].addCards(snakeCards, { fromStock: this.trickStock }));
         }
         // Безвредные карты тоже летят к победителю (в его зону) с затуханием —
@@ -417,6 +425,10 @@ export class Game {
         clearTrickLabels();
         layoutSnakeZone(this, winnerId);
         setSnakeStockHidden(winnerId, false);
+        // змеи проявляются плавно (transition в CSS) — уже разложенные в ряды
+        for (const c of snakeCards) {
+            this.cardsManager.getCardElement(c)?.classList.remove('stp-snake-flight');
+        }
     }
 
     async notif_huntEnded(args: any): Promise<void> {
