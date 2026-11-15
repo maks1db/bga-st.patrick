@@ -412,11 +412,11 @@ export class Game {
         }
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
-            const added = this.snakeStocks[winnerId].addCards(snakeCards);
-            // синхронно сразу после вставки (в одной задаче отрисовки) —
-            // карты не мелькают колонкой даже теоретически
+            // СНАЧАЛА await: в продакшен-сборке bga-cards вставка в DOM
+            // происходит НЕ синхронно — layout до await находит только старые
+            // карты, а новая оседает прямым потомком под рядами.
+            await this.snakeStocks[winnerId].addCards(snakeCards);
             layoutSnakeZone(this, winnerId);
-            await added;
             // мягкое появление: змеи проявляются уже разложенными в ряды
             for (const c of snakeCards) {
                 this.cardsManager.getCardElement(c)?.animate(
