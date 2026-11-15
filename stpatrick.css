@@ -96,24 +96,6 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   min-height: 0;
 }
 
-/* На время перелёта новых карт сток скрыт (setSnakeStockHidden): иначе
-   приземлившиеся в него карты до перегруппировки в ряды видны вертикальной
-   колонкой. Переход смягчает появление раскладенных рядов.
-   ВАЖНО: работает только пока карта — потомок зоны; bga-animations на время
-   slide выносит её в body-level surface — для перелёта из взятки прячем
-   сами карты (класс .stp-snake-flight, ставит/снимает Game.ts). */
-#stp-board .stp-snakes.card-stock.stp-snakes-flight {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-/* Змеиные карты во время перелёта к победителю взятки: прячем сами карты
-   (см. выше — surface вне зоны), проявляются плавно уже разложенными. */
-.bga-cards_card.stp-snake-flight {
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
 /* Ряды змей: до 6 карт в ряду. Новый ряд перекрывает предыдущий,
    оставляя видимой его верхнюю полосу (~35px) с номиналом.
    Внутри ряда — горизонтальная стопка: видна левая полоса карты
