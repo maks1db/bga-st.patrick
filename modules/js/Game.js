@@ -980,11 +980,14 @@ class Game {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
                 setSnakeStockHidden(pid, true); // не мелькать вертикальной колонкой до раскладки
-                this.snakeStocks[pid].addCards(this.snakeCards[pid]);
-                setTimeout(() => {
-                    layoutSnakeZone(this, pid); // после отрисовки стока
+                // Раскладку вешаем на promise стока: фиксированный таймаут
+                // гонался с addCards на медленном мобильном — карты прилетали
+                // ПОСЛЕ layoutSnakeZone и навсегда оставались вертикальной
+                // колонкой (stock — flex-direction: column).
+                void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(() => {
+                    layoutSnakeZone(this, pid);
                     setSnakeStockHidden(pid, false);
-                }, 600);
+                });
             }
         }
         this.bga.notifications.setupPromiseNotifications();
