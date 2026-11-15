@@ -362,14 +362,20 @@ function updateBites(game, pid) {
     n.textContent = String(total);
     box.style.display = total > 0 ? '' : 'none';
 }
-/** Элементы карт появляются в DOM у production bga-cards с заметной задержкой
- *  (резолв addCards раньше вставки) — ждём фактического появления всех id,
- *  иначе раскладка пройдёт мимо и карта осядет колонкой под рядами. */
-function waitCardElements(ids, timeoutMs = 2000) {
+/** Элемент появляется в документе РАНЬШЕ, чем попадает в зону: production
+ *  bga-cards на ~0.5с паркует его в body-level animation surface — поэтому
+ *  проверяем ВХОЖДЕНИЕ в контейнер зоны, иначе раскладка пройдёт мимо и
+ *  карта осядет колонкой под рядами. */
+function waitCardElements(containerId, ids, timeoutMs = 2000) {
     return new Promise(resolve => {
         const t0 = performance.now();
         const check = () => {
-            if (ids.every(id => document.getElementById(id)) || performance.now() - t0 > timeoutMs) {
+            const box = document.getElementById(containerId);
+            const ok = ids.every(id => {
+                const el = document.getElementById(id);
+                return !!el && !!box && box.contains(el);
+            });
+            if (ok || performance.now() - t0 > timeoutMs) {
                 resolve();
             }
             else {
@@ -992,7 +998,7 @@ class Game {
                 // addCards вставляет элементы с задержкой (CDN-сборка) —
                 // ждём их появления, потом раскладка + добор на кадре.
                 void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(async () => {
-                    await waitCardElements(this.snakeCards[pid].map(c => `stp-card-${c.id}`));
+                    await waitCardElements(`stp-snakes-${pid}`, this.snakeCards[pid].map(c => `stp-card-${c.id}`));
                     layoutSnakeZone(this, pid);
                     requestAnimationFrame(() => layoutSnakeZone(this, pid));
                 });
@@ -1225,7 +1231,7 @@ class Game {
             // ждём появления карточек, потом раскладываем; rAF-добор —
             // страховка на следующем кадре.
             await this.snakeStocks[winnerId].addCards(snakeCards);
-            await waitCardElements(snakeCards.map(c => `stp-card-${c.id}`));
+            await waitCardElements(`stp-snakes-${winnerId}`, snakeCards.map(c => `stp-card-${c.id}`));
             layoutSnakeZone(this, winnerId);
             requestAnimationFrame(() => {
                 layoutSnakeZone(this, winnerId);

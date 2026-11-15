@@ -15,14 +15,20 @@ export function updateBites(game: Game, pid: number): void {
     box.style.display = total > 0 ? '' : 'none';
 }
 
-/** Элементы карт появляются в DOM у production bga-cards с заметной задержкой
- *  (резолв addCards раньше вставки) — ждём фактического появления всех id,
- *  иначе раскладка пройдёт мимо и карта осядет колонкой под рядами. */
-export function waitCardElements(ids: string[], timeoutMs = 2000): Promise<void> {
+/** Элемент появляется в документе РАНЬШЕ, чем попадает в зону: production
+ *  bga-cards на ~0.5с паркует его в body-level animation surface — поэтому
+ *  проверяем ВХОЖДЕНИЕ в контейнер зоны, иначе раскладка пройдёт мимо и
+ *  карта осядет колонкой под рядами. */
+export function waitCardElements(containerId: string, ids: string[], timeoutMs = 2000): Promise<void> {
     return new Promise(resolve => {
         const t0 = performance.now();
         const check = () => {
-            if (ids.every(id => document.getElementById(id)) || performance.now() - t0 > timeoutMs) {
+            const box = document.getElementById(containerId);
+            const ok = ids.every(id => {
+                const el = document.getElementById(id);
+                return !!el && !!box && box.contains(el);
+            });
+            if (ok || performance.now() - t0 > timeoutMs) {
                 resolve();
             } else {
                 requestAnimationFrame(check);

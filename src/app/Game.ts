@@ -168,7 +168,7 @@ export class Game {
                 // addCards вставляет элементы с задержкой (CDN-сборка) —
                 // ждём их появления, потом раскладка + добор на кадре.
                 void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(async () => {
-                    await waitCardElements(this.snakeCards[pid].map(c => `stp-card-${c.id}`));
+                    await waitCardElements(`stp-snakes-${pid}`, this.snakeCards[pid].map(c => `stp-card-${c.id}`));
                     layoutSnakeZone(this, pid);
                     requestAnimationFrame(() => layoutSnakeZone(this, pid));
                 });
@@ -420,7 +420,7 @@ export class Game {
             // ждём появления карточек, потом раскладываем; rAF-добор —
             // страховка на следующем кадре.
             await this.snakeStocks[winnerId].addCards(snakeCards);
-            await waitCardElements(snakeCards.map(c => `stp-card-${c.id}`));
+            await waitCardElements(`stp-snakes-${winnerId}`, snakeCards.map(c => `stp-card-${c.id}`));
             layoutSnakeZone(this, winnerId);
             requestAnimationFrame(() => {
                 layoutSnakeZone(this, winnerId);
