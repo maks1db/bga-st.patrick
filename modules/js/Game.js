@@ -886,6 +886,7 @@ class Game {
         this.snakeCards = {}; // pid => карты в открытой зоне
         this.selectableMode = null; // null | 'play' (розыгрыш) | 'pass' (передача)
         this.handGridMode = false;
+        this.playGrowAnim = null; // рост карты сразу по клику (до ответа сервера)
         this.bga = bga;
         this.draftOverlay = new DraftOverlayWidget(this);
         this.passCardsFeature = new PassCardsFeature(this);
@@ -1080,7 +1081,22 @@ class Game {
                 const card = selection[selection.length - 1];
                 this.handStock.unselectAll();
                 if (this.selectableMode === 'play') {
-                    this.bga.actions.performAction('actPlayCard', { cardId: parseInt(card.id, 10) });
+                    const cardId = parseInt(card.id, 10);
+                    // Рост сразу по клику (без жданья сервера): fill forwards
+                    // держит масштаб, пока идёт ответ; отмена — при отказе
+                    // сервера или в notif_cardPlayed перед полётом взятки.
+                    const el = document.getElementById(`stp-card-${cardId}`);
+                    this.playGrowAnim?.cancel();
+                    this.playGrowAnim = null;
+                    if (el && this.bga.gameui.bgaAnimationsActive()) {
+                        this.playGrowAnim = el.animate([{ scale: '1' }, { scale: '1.18' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+                        this.playGrowAnim.finished.catch(() => { });
+                    }
+                    this.bga.actions.performAction('actPlayCard', { cardId })
+                        .catch(() => {
+                        this.playGrowAnim?.cancel();
+                        this.playGrowAnim = null;
+                    });
                 }
                 else {
                     this.passCardsFeature.passOne(normalizeCard(card));
@@ -1204,13 +1220,9 @@ class Game {
         const mine = this.myHand.some(c => c.id === card.id);
         if (mine) {
             this.myHand = this.myHand.filter(c => c.id !== card.id);
-            // Кликнутая карта сначала слегка увеличивается, потом летит
-            // в зону разыгранных карт. Анимируем свойство scale (не
-            // transform) — оно не конфликтует с поворотом веера в руке.
-            const el = this.cardsManager.getCardElement(card);
-            if (el && this.bga.gameui.bgaAnimationsActive()) {
-                await el.animate([{ scale: '1' }, { scale: '1.18' }], { duration: 260, easing: 'ease-out' }).finished.catch(() => { });
-            }
+            // возврат к масштабу 1 (рост от клика больше не нужен) — и полёт
+            this.playGrowAnim?.cancel();
+            this.playGrowAnim = null;
             await this.trickStock.addCards([card], { fromStock: this.handStock });
         }
         else {
