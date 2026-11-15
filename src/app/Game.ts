@@ -393,6 +393,16 @@ export class Game {
         const mine = this.myHand.some(c => c.id === card.id);
         if (mine) {
             this.myHand = this.myHand.filter(c => c.id !== card.id);
+            // Кликнутая карта сначала слегка увеличивается, потом летит
+            // в зону разыгранных карт. Анимируем свойство scale (не
+            // transform) — оно не конфликтует с поворотом веера в руке.
+            const el = this.cardsManager.getCardElement(card);
+            if (el && this.bga.gameui.bgaAnimationsActive()) {
+                await el.animate(
+                    [{ scale: '1' }, { scale: '1.18' }],
+                    { duration: 260, easing: 'ease-out' },
+                ).finished.catch(() => { /* анимация прервана */ });
+            }
             await this.trickStock.addCards([card], { fromStock: this.handStock });
         } else {
             await this.trickStock.addCards([card]);

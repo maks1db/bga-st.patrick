@@ -106,6 +106,13 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   display: none !important;
 }
 
+/* Плейсхолдер парковки bga-animations внутри зоны змей: пустой div, но
+   занимает слот под рядами ~0.5с (зона растёт по высоте). Видимой роли не
+   играет — раскладку змей всё равно делает layoutSnakeZone — прячем. */
+#stp-board .stp-snakes .bga-animations_placeholder {
+  display: none !important;
+}
+
 /* Ряды змей: до 6 карт в ряду. Новый ряд перекрывает предыдущий,
    оставляя видимой его верхнюю полосу (~35px) с номиналом.
    Внутри ряда — горизонтальная стопка: видна левая полоса карты
