@@ -995,12 +995,22 @@ class Game {
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
-                // addCards вставляет элементы с задержкой (CDN-сборка) —
-                // ждём их появления, потом раскладка + добор на кадре.
-                void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(async () => {
-                    await waitCardElements(`stp-snakes-${pid}`, this.snakeCards[pid].map(c => `stp-card-${c.id}`));
+                // Парковка на surface (~0.5с): элемент виден под рядами, пока
+                // библиотека не посадит его в зону — прячем сразу после
+                // addCards, ждём ВХОЖДЕНИЯ в зону, раскладываем, проявляем.
+                const cards = this.snakeCards[pid];
+                void this.snakeStocks[pid].addCards(cards).then(async () => {
+                    for (const c of cards) {
+                        this.cardsManager.getCardElement(c)?.classList.add('stp-snake-appear');
+                    }
+                    await waitCardElements(`stp-snakes-${pid}`, cards.map(c => `stp-card-${c.id}`));
                     layoutSnakeZone(this, pid);
-                    requestAnimationFrame(() => layoutSnakeZone(this, pid));
+                    requestAnimationFrame(() => {
+                        layoutSnakeZone(this, pid);
+                        for (const c of cards) {
+                            this.cardsManager.getCardElement(c)?.classList.remove('stp-snake-appear');
+                        }
+                    });
                 });
             }
         }
@@ -1227,17 +1237,30 @@ class Game {
         }
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
-            // addCards резолвится ДО вставки элементов в DOM (CDN-сборка) —
-            // ждём появления карточек, потом раскладываем; rAF-добор —
-            // страховка на следующем кадре.
+            // ГЛАВНОЕ: production bga-cards ~0.5с «паркует» новый элемент на
+            // body-level surface, и он ВИДЕН в целевой позиции — прямым
+            // потомком зоны ПОД рядами (поэтому пустая зона не страдала:
+            // позиция совпадала с будущим рядом). Не ждём вставки — сразу
+            // прячем сам элемент (класс живёт на нём вне зоны), затем
+            // дожидаемся ВХОЖДЕНИЯ в зону, раскладываем и только после этого
+            // проявляем уже в рядах.
+            const hide = () => {
+                for (const c of snakeCards) {
+                    this.cardsManager.getCardElement(c)?.classList.add('stp-snake-appear');
+                }
+            };
             await this.snakeStocks[winnerId].addCards(snakeCards);
+            hide();
             await waitCardElements(`stp-snakes-${winnerId}`, snakeCards.map(c => `stp-card-${c.id}`));
+            hide(); // на случай позднего появления элемента
             layoutSnakeZone(this, winnerId);
             requestAnimationFrame(() => {
                 layoutSnakeZone(this, winnerId);
                 // мягкое появление: змеи проявляются уже разложенными в ряды
                 for (const c of snakeCards) {
-                    this.cardsManager.getCardElement(c)?.animate([{ opacity: 0, transform: 'translateY(10px) scale(0.92)' }, { opacity: 1, transform: 'none' }], { duration: 350, easing: 'ease-out' });
+                    const el = this.cardsManager.getCardElement(c);
+                    el?.classList.remove('stp-snake-appear');
+                    el?.animate([{ opacity: 0, transform: 'translateY(10px) scale(0.92)' }, { opacity: 1, transform: 'none' }], { duration: 350, easing: 'ease-out' });
                 }
             });
         }
