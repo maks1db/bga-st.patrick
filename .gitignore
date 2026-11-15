@@ -3,5 +3,11 @@ bga_initial_code_template/
 __pycache__/
 
 *.pdf
+/img/*.png
+!/img/elements.png
+!/img/phase-1.png
 img/main-sprite.png
 node_modules
+
+# временные скриншоты из корня проекта
+/*.png
