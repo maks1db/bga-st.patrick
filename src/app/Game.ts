@@ -166,14 +166,20 @@ export class Game {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
                 // Парковка на surface (~0.5с): элемент виден под рядами, пока
-                // библиотека не посадит его в зону — прячем сразу после
-                // addCards, ждём ВХОЖДЕНИЯ в зону, раскладываем, проявляем.
+                // библиотека не посадит его в зону — прячем СРАЗУ после вызова
+                // (элемент уже в документе), ждём ВХОЖДЕНИЯ в зону, расклады-
+                // ваем, проявляем. Повторный hide — на случай поздней вставки.
                 const cards = this.snakeCards[pid];
-                void this.snakeStocks[pid].addCards(cards).then(async () => {
+                const hide = () => {
                     for (const c of cards) {
                         this.cardsManager.getCardElement(c)?.classList.add('stp-snake-appear');
                     }
+                };
+                const added = this.snakeStocks[pid].addCards(cards);
+                hide();
+                void added.then(async () => {
                     await waitCardElements(`stp-snakes-${pid}`, cards.map(c => `stp-card-${c.id}`));
+                    hide();
                     layoutSnakeZone(this, pid);
                     requestAnimationFrame(() => {
                         layoutSnakeZone(this, pid);
@@ -438,8 +444,9 @@ export class Game {
                     this.cardsManager.getCardElement(c)?.classList.add('stp-snake-appear');
                 }
             };
-            await this.snakeStocks[winnerId].addCards(snakeCards);
-            hide();
+            const added = this.snakeStocks[winnerId].addCards(snakeCards);
+            hide(); // СРАЗУ: элемент уже в документе (surface) — скрываем всю парковку
+            await added;
             await waitCardElements(`stp-snakes-${winnerId}`, snakeCards.map(c => `stp-card-${c.id}`));
             hide(); // на случай позднего появления элемента
             layoutSnakeZone(this, winnerId);
