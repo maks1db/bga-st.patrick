@@ -165,9 +165,14 @@ export class Game {
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
-                // Без анимации: addCards синхронно вставляет карты, раскладка
-                // в ряды — в микротаске до отрисовки, колонка не мелькает.
-                void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(() => layoutSnakeZone(this, pid));
+                // Без анимации: addCards вставляет карты, раскладка в ряды —
+                // сразу после; повторная раскладка на следующем кадре —
+                // страховка от гонки резолва promise и вставки (CDN-сборка
+                // bga-cards вставляет НЕ синхронно).
+                void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(() => {
+                    layoutSnakeZone(this, pid);
+                    requestAnimationFrame(() => layoutSnakeZone(this, pid));
+                });
             }
         }
 
@@ -414,16 +419,22 @@ export class Game {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
             // СНАЧАЛА await: в продакшен-сборке bga-cards вставка в DOM
             // происходит НЕ синхронно — layout до await находит только старые
-            // карты, а новая оседает прямым потомком под рядами.
+            // карты, а новая оседает прямым потомком под рядами. Даже после
+            // await возможна гонка (резолв раньше вставки на части клиентов),
+            // поэтому — страховочная раскладка на следующем кадре: она
+            // заберёт опоздавшие карты из «колонки» в ряды до показа.
             await this.snakeStocks[winnerId].addCards(snakeCards);
             layoutSnakeZone(this, winnerId);
-            // мягкое появление: змеи проявляются уже разложенными в ряды
-            for (const c of snakeCards) {
-                this.cardsManager.getCardElement(c)?.animate(
-                    [{ opacity: 0, transform: 'translateY(10px) scale(0.92)' }, { opacity: 1, transform: 'none' }],
-                    { duration: 350, easing: 'ease-out' },
-                );
-            }
+            requestAnimationFrame(() => {
+                layoutSnakeZone(this, winnerId);
+                // мягкое появление: змеи проявляются уже разложенными в ряды
+                for (const c of snakeCards) {
+                    this.cardsManager.getCardElement(c)?.animate(
+                        [{ opacity: 0, transform: 'translateY(10px) scale(0.92)' }, { opacity: 1, transform: 'none' }],
+                        { duration: 350, easing: 'ease-out' },
+                    );
+                }
+            });
         }
     }
 
