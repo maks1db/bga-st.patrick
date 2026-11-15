@@ -17,9 +17,12 @@ export function updateBites(game: Game, pid: number): void {
 
 /** Вложенный сток зоны змей прячем на время добавления карт: новые карты
  *  приземляются в него и до перегруппировки в ряды (layoutSnakeZone)
- *  мелькают вертикальной колонкой (сток — flex-direction: column). */
+ *  мелькают вертикальной колонкой (сток — flex-direction: column).
+ *  NB: элемент зоны САМ является стоком — bga-cards вешает .card-stock
+ *  на переданный элемент, querySelector('.card-stock') искал бы только
+ *  потомков и молча возвращал null (класс не применялся, мигание было). */
 export function setSnakeStockHidden(pid: number, hidden: boolean): void {
-    document.getElementById(`stp-snakes-${pid}`)?.querySelector('.card-stock')
+    document.getElementById(`stp-snakes-${pid}`)
         ?.classList.toggle('stp-snakes-flight', hidden);
 }
 
