@@ -393,9 +393,13 @@ export class Game {
         }
         const winnerId = parseInt(args.player_id, 10);
         const snakeCards = (args.snakeCards ?? []).map((c: any) => this.normalizeCard(c));
-        // Вся взятка целиком (включая змей) улетает к победителю с затуханием —
-        // как обычная взятка без змей. Сами змеи затем ПОЯВЛЯЮТСЯ в его зоне
-        // (эффект ниже), поэтому вертикальной колонки при перелёте нет.
+        // Змеи не должны быть видны во время полёта взятки (карта мелькает
+        // под существующими змеями в зоне) — прячем их до конца перелёта.
+        for (const c of snakeCards) {
+            this.cardsManager.getCardElement(c)?.classList.add('stp-snake-flight');
+        }
+        // Вся взятка улетает к победителю с затуханием. Змеи затем ПОЯВЛЯЮТСЯ
+        // в его зоне (эффект ниже), а не долетая до неё.
         const zone = document.getElementById(`stp-zone-${winnerId}`);
         const trickCards = [...this.currentTrick];
         this.currentTrick = [];
@@ -403,12 +407,16 @@ export class Game {
         await this.trickStock.removeCards(trickCards, { slideTo: zone ?? undefined, fadeOut: true });
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
-            // без перелёта — карты сразу в зоне, layout в той же задаче отрисовки
-            await this.snakeStocks[winnerId].addCards(snakeCards);
+            const added = this.snakeStocks[winnerId].addCards(snakeCards);
+            // синхронно сразу после вставки (в одной задаче отрисовки) —
+            // карты не мелькают колонкой/под рядами даже теоретически
             layoutSnakeZone(this, winnerId);
-            // мягкое появление: змеи проявляются уже разложенными в ряды
+            await added;
             for (const c of snakeCards) {
-                this.cardsManager.getCardElement(c)?.animate(
+                const el = this.cardsManager.getCardElement(c);
+                el?.classList.remove('stp-snake-flight');
+                // мягкое появление: змеи проявляются уже разложенными в ряды
+                el?.animate(
                     [{ opacity: 0, transform: 'translateY(10px) scale(0.92)' }, { opacity: 1, transform: 'none' }],
                     { duration: 350, easing: 'ease-out' },
                 );
