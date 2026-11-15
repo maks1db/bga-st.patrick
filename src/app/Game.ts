@@ -393,30 +393,33 @@ export class Game {
         }
         const winnerId = parseInt(args.player_id, 10);
         const snakeCards = (args.snakeCards ?? []).map((c: any) => this.normalizeCard(c));
-        // Змеи не должны быть видны во время полёта взятки (карта мелькает
-        // под существующими змеями в зоне) — прячем их до конца перелёта.
-        for (const c of snakeCards) {
-            this.cardsManager.getCardElement(c)?.classList.add('stp-snake-flight');
-        }
-        // Вся взятка улетает к победителю с затуханием. Змеи затем ПОЯВЛЯЮТСЯ
-        // в его зоне (эффект ниже), а не долетая до неё.
+        // Змеи убираются из взятки МГНОВЕННО (без анимации): если гнать их
+        // через перелёт с безвредными, bga-animations забирает элементы в
+        // surface, addCards переиспользует их, а финальный хук анимации
+        // возвращает в зону уже после layoutSnakeZone — колонкой под рядами.
+        // Безвредные карты летят к победителю с затуханием (видно, кому
+        // уходит взятка); змеи затем появляются в его зоне эффектом ниже.
+        const snakeIds = new Set(snakeCards.map(c => c.id));
+        const harmless = this.currentTrick.filter(c => !snakeIds.has(c.id));
         const zone = document.getElementById(`stp-zone-${winnerId}`);
-        const trickCards = [...this.currentTrick];
         this.currentTrick = [];
         clearTrickLabels();
-        await this.trickStock.removeCards(trickCards, { slideTo: zone ?? undefined, fadeOut: true });
+        if (snakeCards.length > 0) {
+            await this.trickStock.removeCards(snakeCards);
+        }
+        if (harmless.length > 0) {
+            await this.trickStock.removeCards(harmless, { slideTo: zone ?? undefined, fadeOut: true });
+        }
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
             const added = this.snakeStocks[winnerId].addCards(snakeCards);
             // синхронно сразу после вставки (в одной задаче отрисовки) —
-            // карты не мелькают колонкой/под рядами даже теоретически
+            // карты не мелькают колонкой даже теоретически
             layoutSnakeZone(this, winnerId);
             await added;
+            // мягкое появление: змеи проявляются уже разложенными в ряды
             for (const c of snakeCards) {
-                const el = this.cardsManager.getCardElement(c);
-                el?.classList.remove('stp-snake-flight');
-                // мягкое появление: змеи проявляются уже разложенными в ряды
-                el?.animate(
+                this.cardsManager.getCardElement(c)?.animate(
                     [{ opacity: 0, transform: 'translateY(10px) scale(0.92)' }, { opacity: 1, transform: 'none' }],
                     { duration: 350, easing: 'ease-out' },
                 );
