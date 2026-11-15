@@ -435,23 +435,14 @@ export class Game {
         }
         const winnerId = parseInt(args.player_id, 10);
         const snakeCards = (args.snakeCards ?? []).map((c: any) => this.normalizeCard(c));
-        // Змеи убираются из взятки МГНОВЕННО (без анимации): если гнать их
-        // через перелёт с безвредными, bga-animations забирает элементы в
-        // surface, addCards переиспользует их, а финальный хук анимации
-        // возвращает в зону уже после layoutSnakeZone — колонкой под рядами.
-        // Безвредные карты летят к победителю с затуханием (видно, кому
-        // уходит взятка); змеи затем появляются в его зоне эффектом ниже.
-        const snakeIds = new Set(snakeCards.map(c => c.id));
-        const harmless = this.currentTrick.filter(c => !snakeIds.has(c.id));
+        // Вся взятка целиком (включая змей) улетает к победителю с затуханием —
+        // видно, кому уходит взятка. Сами змеи затем появляются в зоне
+        // победителя эффектом ниже.
         const zone = document.getElementById(`stp-zone-${winnerId}`);
+        const trickCards = [...this.currentTrick];
         this.currentTrick = [];
         clearTrickLabels();
-        if (snakeCards.length > 0) {
-            await this.trickStock.removeCards(snakeCards);
-        }
-        if (harmless.length > 0) {
-            await this.trickStock.removeCards(harmless, { slideTo: zone ?? undefined, fadeOut: true });
-        }
+        await this.trickStock.removeCards(trickCards, { slideTo: zone ?? undefined, fadeOut: true });
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
             // ГЛАВНОЕ: production bga-cards ~0.5с «паркует» новый элемент на
