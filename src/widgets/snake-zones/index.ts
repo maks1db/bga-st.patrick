@@ -15,6 +15,23 @@ export function updateBites(game: Game, pid: number): void {
     box.style.display = total > 0 ? '' : 'none';
 }
 
+/** Элементы карт появляются в DOM у production bga-cards с заметной задержкой
+ *  (резолв addCards раньше вставки) — ждём фактического появления всех id,
+ *  иначе раскладка пройдёт мимо и карта осядет колонкой под рядами. */
+export function waitCardElements(ids: string[], timeoutMs = 2000): Promise<void> {
+    return new Promise(resolve => {
+        const t0 = performance.now();
+        const check = () => {
+            if (ids.every(id => document.getElementById(id)) || performance.now() - t0 > timeoutMs) {
+                resolve();
+            } else {
+                requestAnimationFrame(check);
+            }
+        };
+        check();
+    });
+}
+
 /** Зона змей: сортировка (масть, номинал), ряды по 6 карт; новые ряды
  *  перекрывают предыдущие (CSS: margin-top отрицательный), внутри ряда
  *  ранние карты лежат поверх поздних (видна левая полоса с номиналом). */

@@ -17,7 +17,7 @@ import { normalizeCard, sortHand, setupCardFront, CARD_W, CARD_H } from '../enti
 import type { Card } from '../entities/card';
 import { DraftOverlayWidget } from '../widgets/draft-overlay';
 import { labelTrickCard, clearTrickLabels } from '../widgets/trick';
-import { layoutSnakeZone, updateBites } from '../widgets/snake-zones';
+import { layoutSnakeZone, updateBites, waitCardElements } from '../widgets/snake-zones';
 import { showRoundSummary } from '../widgets/round-summary';
 import { showSpecialHuntModal } from '../widgets/special-hunt';
 import { PassCardsFeature } from '../features/pass-cards';
@@ -165,11 +165,10 @@ export class Game {
         for (const player of Object.values(gamedatas.players)) {
             const pid = parseInt(player.id, 10);
             if (this.snakeCards[pid].length > 0) {
-                // Без анимации: addCards вставляет карты, раскладка в ряды —
-                // сразу после; повторная раскладка на следующем кадре —
-                // страховка от гонки резолва promise и вставки (CDN-сборка
-                // bga-cards вставляет НЕ синхронно).
-                void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(() => {
+                // addCards вставляет элементы с задержкой (CDN-сборка) —
+                // ждём их появления, потом раскладка + добор на кадре.
+                void this.snakeStocks[pid].addCards(this.snakeCards[pid]).then(async () => {
+                    await waitCardElements(this.snakeCards[pid].map(c => `stp-card-${c.id}`));
                     layoutSnakeZone(this, pid);
                     requestAnimationFrame(() => layoutSnakeZone(this, pid));
                 });
@@ -417,13 +416,11 @@ export class Game {
         }
         if (snakeCards.length > 0) {
             this.snakeCards[winnerId] = [...(this.snakeCards[winnerId] ?? []), ...snakeCards];
-            // СНАЧАЛА await: в продакшен-сборке bga-cards вставка в DOM
-            // происходит НЕ синхронно — layout до await находит только старые
-            // карты, а новая оседает прямым потомком под рядами. Даже после
-            // await возможна гонка (резолв раньше вставки на части клиентов),
-            // поэтому — страховочная раскладка на следующем кадре: она
-            // заберёт опоздавшие карты из «колонки» в ряды до показа.
+            // addCards резолвится ДО вставки элементов в DOM (CDN-сборка) —
+            // ждём появления карточек, потом раскладываем; rAF-добор —
+            // страховка на следующем кадре.
             await this.snakeStocks[winnerId].addCards(snakeCards);
+            await waitCardElements(snakeCards.map(c => `stp-card-${c.id}`));
             layoutSnakeZone(this, winnerId);
             requestAnimationFrame(() => {
                 layoutSnakeZone(this, winnerId);
