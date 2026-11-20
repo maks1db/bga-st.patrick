@@ -1283,10 +1283,13 @@ class Game {
         }
     }
     async notif_huntEnded(args) {
-        // Досрочный конец охоты [H16]: информационное уведомление — остаток
-        // охоты доигрывается сервером автоматически, каждая карта уйдёт из
-        // руки через notif_cardPlayed. Руку здесь НЕ чистим: карты должны
-        // анимированно долететь из руки взяткой, а не исчезнуть мгновенно.
+        // Досрочный конец охоты [H16]: сервер сбросил оставшиеся карты —
+        // убираем свою руку (чужие руки на столе не отображаются).
+        if (this.myHand.length > 0) {
+            const remaining = [...this.myHand];
+            this.myHand = [];
+            await this.handStock.removeCards(remaining);
+        }
     }
     notif_huntScored(args) {
         this.adjustAllHp(args.losses);

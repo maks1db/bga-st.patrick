@@ -13,10 +13,11 @@ use Bga\Games\StPatrick\States\ScoreHunt;
 /**
  * Розыгрыш взятки: старшая карта ведущей масти забирает взятку; змеиные карты
  * выкладываются лицом вверх перед победителем [H14], остальные — в сброс.
+ * Последняя взятка: если у каждого игрока осталась ровно одна карта, взятка
+ * разыгрывается автоматически, в порядке очереди (ведёт победитель
+ * предыдущей взятки) — клиент анимирует стандартные уведомления.
  * Досрочный конец охоты [H16]: если ни у кого не осталось змеиных карт,
- * оставшиеся безвредные карты доигрываются автоматически — взятка за взяткой,
- * в порядке очереди (ведёт победитель предыдущей взятки) — затем охота
- * завершается и выполняется подсчёт.
+ * оставшиеся карты сбрасываются и охота завершается.
  */
 class ResolveTrick extends GameState
 {
@@ -31,56 +32,65 @@ class ResolveTrick extends GameState
         $plays = $this->bga->globals->get('trick_plays');
         $winnerId = $this->resolveTrick($plays);
 
-        // Досрочный конец охоты [H16]: ни у одного игрока не осталось на руке
-        // змеиных карт (наносящих укусы) — урон больше невозможен.
-        $leftover = 0;
+        // Подсчёт оставшихся на руках карт: есть ли ещё змеиные [H16] и
+        // сколько всего карт (последняя взятка = ровно одна у каждого).
+        $bitingLeft = false;
+        $cardsLeft = 0;
         foreach ($this->game->playerIds() as $pid) {
             $hand = $this->game->getHand($pid);
-            $leftover += $hand->count();
+            $cardsLeft += $hand->count();
             foreach ($hand as $card) {
                 if (Game::cardBites($card) > 0) {
-                    $this->gamestate->changeActivePlayer($winnerId);
-                    return HuntPlay::class;
+                    $bitingLeft = true;
                 }
             }
         }
 
-        if ($leftover === 0) {
-            // Все карты сыграны — обычный конец охоты.
+        // Досрочный конец охоты [H16]: ни у одного игрока не осталось на руке
+        // змеиных карт (наносящих укусы) — оставшиеся карты сбрасываются,
+        // охота завершается и выполняется подсчёт.
+        if (!$bitingLeft) {
+            if ($cardsLeft > 0) {
+                foreach ($this->game->playerIds() as $pid) {
+                    $this->game->cards->moveAllItemsInLocation(['hand', $pid], 'discard');
+                }
+                $this->notify->all('huntEnded', clienttranslate('No snake cards remain in any hand — the remaining cards are discarded and the hunt ends'), []);
+            }
             return ScoreHunt::class;
         }
 
-        $this->notify->all('huntEnded', clienttranslate('No snake cards remain in any hand — the remaining cards are played out automatically and the hunt ends'), []);
-
-        // Автодоигровка остатка охоты: ведёт победитель только что разыгранной
-        // взятки, дальше по часовой. Клиент анимирует стандартные уведомления
-        // cardPlayed/trickWon — карты вылетают из рук в порядке очереди.
-        $leader = $winnerId;
-        while (true) {
-            $plays = [];
-            foreach ($this->playOrderFrom($leader) as $pid) {
-                if ($this->game->getHand($pid)->count() === 0) {
-                    continue;
-                }
-                $legal = $this->game->legalCardIds($pid);
-                $card = $this->game->cards->getItemById($legal[0]);
-                $this->game->cards->moveItem($card, ['trick', $pid]);
-                $plays[] = ['playerId' => $pid, 'cardId' => $card->id];
-                $this->bga->globals->set('trick_plays', $plays);
-                $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_name}'), [
-                    'player_id' => $pid,
-                    'player_name' => $this->game->getPlayerNameById($pid),
-                    'card_name' => Game::cardLogName($card),
-                    'card' => $card,
-                ]);
-            }
-            if (count($plays) === 0) {
-                break;
-            }
-            $leader = $this->resolveTrick($plays);
+        // Последняя взятка охоты: у каждого игрока ровно одна карта —
+        // разыгрываем её автоматически в порядке очереди, без кликов.
+        if ($cardsLeft === $this->game->getPlayersNumber()) {
+            $this->autoPlayLastTrick($winnerId);
+            return ScoreHunt::class;
         }
 
-        return ScoreHunt::class;
+        $this->gamestate->changeActivePlayer($winnerId);
+        return HuntPlay::class;
+    }
+
+    /**
+     * Автоматический розыгрыш последней взятки: по одной карте у каждого
+     * игрока, сервер играет их по очереди, начиная с $leader, через
+     * стандартные уведомления cardPlayed — клиент анимирует полёт из рук.
+     */
+    private function autoPlayLastTrick(int $leader): void
+    {
+        $plays = [];
+        foreach ($this->playOrderFrom($leader) as $pid) {
+            $card = $this->game->getHand($pid)->first();
+            $this->game->cards->moveItem($card, ['trick', $pid]);
+            $plays[] = ['playerId' => $pid, 'cardId' => $card->id];
+            $this->bga->globals->set('trick_plays', $plays);
+            $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_name}'), [
+                'player_id' => $pid,
+                'player_name' => $this->game->getPlayerNameById($pid),
+                'card_name' => Game::cardLogName($card),
+                'card' => $card,
+            ]);
+        }
+        $this->resolveTrick($plays);
     }
 
     /**
