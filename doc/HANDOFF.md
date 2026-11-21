@@ -662,7 +662,25 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
 
 ## Что сделано 21.11
 
-61. **Ссылка на правила на геймпанели** (метаданные студии, без деплоя):
+62. **Перевод игры на русский** (crowdsourced-перевод BGA,
+    `boardgamearena.com/translation?module_id=3181`, en→ru, аккаунт
+    maksskvor): **67/67 строк переведено и сохранено на сервере**
+    (проверено reload'ом: стр. 1 — 50/50, стр. 2 — 17/17). Терминология
+    сверена с doc/RULES.md: реликвии, разбор реликвий, охота, особая
+    охота, взятка, масть, укусы, очки жизни, проклятие, св. Патрик.
+    - ⚠ Важная находка: каталог строк на сервере обновился (рескан
+      после деплоя) — старые 67 строк частично заменены: добавлены
+      «wins the trick», «Hunt scoring», «No snake cards remain…»,
+      «Remaining:», «Relic Draft», «Take», «Pass», «Round summary»,
+      «Player», «Relics», «Close» и др.; строка «No passed card to take
+      back» заменена на «You have no passed cards to take back». Если
+      деплой меняет clienttranslate-строки — перевод надо добивать
+      заново на обновлённом каталоге.
+    - Грабли механики сохранения: textarea сохраняет только через
+      реальный dojo onChange-on-blur — нужен именно focus() → set
+      value → dispatch input+change → blur() по-focused; просто
+      dispatch change не сохраняет.
+63. **Ссылка на правила на геймпанели** (метаданные студии, без деплоя):
     на `studio.boardgamearena.com/gamepanel?game=stpatrick` в секции
     «Game rules» добавлена ссылка «Official rules (English PDF)» →
     https://tesera.ru/images/items/2348791/St%20Patrick%20Rules.pdf
