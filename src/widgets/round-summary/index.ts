@@ -1,11 +1,12 @@
 /**
- * Виджет: итоговая таблица раунда (реликвии / змеи / здоровье).
+ * Виджет: итоговая таблица раунда (змеи / реликвии / здоровье).
  * Модальное окно: размытый бэкдроп поверх стола, клик по бэкдропу или ×
  * закрывает. Собирается из уведомлений подсчёта; HP читается из уже
  * обновлённых счётчиков — показываем HP на НАЧАЛО раунда (счётчик +
  * полученный урон), урон — красным «(↓N)» в скобках. Змеи — число карт
- * в открытой зоне игрока. Живёт до закрытия или до таблицы следующего
- * раунда; при reload не восстанавливается (авторитетная запись — журнал).
+ * в открытой зоне игрока (вторая колонка). Живёт до закрытия или до
+ * таблицы следующего раунда; при reload не восстанавливается (авторитетная
+ * запись — журнал).
  */
 import type { Game } from '../../app/Game';
 
@@ -21,8 +22,8 @@ export function showRoundSummary(game: Game, relics: Record<string, number>, los
         const hpStart = hp + dmg; // счётчик уже после подсчёта — возвращаем HP на начало раунда
         return `<tr>
             <td class="stp-rs-name" style="color:#${p.color}">${p.name}</td>
-            <td>${relic}</td>
             <td>${snakes}</td>
+            <td>${relic}</td>
             <td class="${hp <= 0 ? 'stp-rs-dead' : ''}">${hpStart}${dmg > 0 ? ` <span class="stp-rs-dmg">(↓${dmg})</span>` : ''}</td>
         </tr>`;
     }).join('');
@@ -37,8 +38,8 @@ export function showRoundSummary(game: Game, relics: Record<string, number>, los
                 <table class="stp-rs-table">
                     <tr>
                         <th>${_('Player')}</th>
-                        <th><span class="stp-elt stp-elt-relic stp-elt-sm" title="${_('Relics')}"></span></th>
                         <th><span class="stp-elt stp-elt-snake stp-elt-sm" title="${_('Snakes')}"></span></th>
+                        <th><span class="stp-elt stp-elt-relic stp-elt-sm" title="${_('Relics')}"></span></th>
                         <th><span class="stp-elt stp-elt-heart stp-elt-sm" title="${_('Health')}"></span></th>
                     </tr>
                     ${rows}

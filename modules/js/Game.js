@@ -452,8 +452,8 @@ function showRoundSummary(game, relics, losses) {
         const hpStart = hp + dmg; // счётчик уже после подсчёта — возвращаем HP на начало раунда
         return `<tr>
             <td class="stp-rs-name" style="color:#${p.color}">${p.name}</td>
-            <td>${relic}</td>
             <td>${snakes}</td>
+            <td>${relic}</td>
             <td class="${hp <= 0 ? 'stp-rs-dead' : ''}">${hpStart}${dmg > 0 ? ` <span class="stp-rs-dmg">(↓${dmg})</span>` : ''}</td>
         </tr>`;
     }).join('');
@@ -468,8 +468,8 @@ function showRoundSummary(game, relics, losses) {
                 <table class="stp-rs-table">
                     <tr>
                         <th>${_('Player')}</th>
-                        <th><span class="stp-elt stp-elt-relic stp-elt-sm" title="${_('Relics')}"></span></th>
                         <th><span class="stp-elt stp-elt-snake stp-elt-sm" title="${_('Snakes')}"></span></th>
+                        <th><span class="stp-elt stp-elt-relic stp-elt-sm" title="${_('Relics')}"></span></th>
                         <th><span class="stp-elt stp-elt-heart stp-elt-sm" title="${_('Health')}"></span></th>
                     </tr>
                     ${rows}
