@@ -789,7 +789,7 @@ body.stp-draft-open #stp-hand {
 }
 .stp-elt {
   display: inline-block;
-  background-image: url("img/elements.png");
+  background-image: url("img/elements-48.png");
   background-repeat: no-repeat;
   background-size: 400% 100%;
   vertical-align: middle;

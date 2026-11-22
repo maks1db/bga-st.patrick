@@ -5,6 +5,7 @@ __pycache__/
 *.pdf
 /img/*.png
 !/img/elements.png
+!/img/elements-48.png
 !/img/phase-1.png
 img/main-sprite.png
 node_modules

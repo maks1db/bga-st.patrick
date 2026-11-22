@@ -1,8 +1,8 @@
-// ---- shared: спрайт элементов (img/elements.png, 4 ячейки 192×192) -------
+// ---- shared: спрайт элементов (img/elements-48.png, 4 ячейки 48×48) ------
 
 .stp-elt {
     display: inline-block;
-    background-image: url('img/elements.png');
+    background-image: url('img/elements-48.png');
     background-repeat: no-repeat;
     background-size: 400% 100%;
     vertical-align: middle;
