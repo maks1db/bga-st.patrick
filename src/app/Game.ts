@@ -488,6 +488,8 @@ export class Game {
         }
     }
 
+    notif_roundAutoplay(args: any): void { /* информационное сообщение [H17] — лог в журнале */ }
+
     notif_huntScored(args: any): void {
         this.adjustAllHp(args.losses);
         showRoundSummary(this, args.relics, args.losses);

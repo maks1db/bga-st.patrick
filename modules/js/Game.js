@@ -1291,6 +1291,7 @@ class Game {
             await this.handStock.removeCards(remaining);
         }
     }
+    notif_roundAutoplay(args) { }
     notif_huntScored(args) {
         this.adjustAllHp(args.losses);
         showRoundSummary(this, args.relics, args.losses);
