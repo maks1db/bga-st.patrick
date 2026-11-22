@@ -200,6 +200,18 @@ html:has(body.stp-draft-bg), body.stp-draft-bg, body.stp-draft-bg #page-content 
   transform: translateY(-6px);
 }
 
+/* Заголовок авторозыгрышка [H17]: над игровой зоной висит весь поток
+   автоматических взяток. Тёмная плашка — читается и в dark mode. */
+.stp-autoplay-info {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7019607843);
+  border-radius: 10px;
+  padding: 8px 22px;
+  text-align: center;
+}
+
 /* Пульс выигравшей карты взятки: небольшое увеличение/уменьшение
    во время паузы перед разрешением взятки (notif_trickWon). */
 @keyframes stp-trick-win-pulse {

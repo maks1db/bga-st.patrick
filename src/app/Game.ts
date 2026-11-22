@@ -16,7 +16,7 @@ import type { StPatrickGamedatas } from '../shared/types/gamedatas';
 import { normalizeCard, sortHand, setupCardFront, CARD_W, CARD_H } from '../entities/card';
 import type { Card } from '../entities/card';
 import { DraftOverlayWidget } from '../widgets/draft-overlay';
-import { labelTrickCard, clearTrickLabels } from '../widgets/trick';
+import { labelTrickCard, clearTrickLabels, showAutoPlayBanner, removeAutoPlayBanner } from '../widgets/trick';
 import { layoutSnakeZone, updateBites, waitCardElements } from '../widgets/snake-zones';
 import { showRoundSummary } from '../widgets/round-summary';
 import { showSpecialHuntModal } from '../widgets/special-hunt';
@@ -481,6 +481,7 @@ export class Game {
     async notif_huntEnded(args: any): Promise<void> {
         // Досрочный конец охоты [H16]: сервер сбросил оставшиеся карты —
         // убираем свою руку (чужие руки на столе не отображаются).
+        removeAutoPlayBanner();
         if (this.myHand.length > 0) {
             const remaining = [...this.myHand];
             this.myHand = [];
@@ -488,9 +489,13 @@ export class Game {
         }
     }
 
-    notif_roundAutoplay(args: any): void { /* информационное сообщение [H17] — лог в журнале */ }
+    notif_roundAutoplay(args: any): void {
+        // Авторозыгрышка [H17]: заголовок, что все взятки забирает этот игрок.
+        showAutoPlayBanner(this, parseInt(args.player_id, 10));
+    }
 
     notif_huntScored(args: any): void {
+        removeAutoPlayBanner(); // авторозыгрышка завершена — заголовок больше не нужен
         this.adjustAllHp(args.losses);
         showRoundSummary(this, args.relics, args.losses);
     }

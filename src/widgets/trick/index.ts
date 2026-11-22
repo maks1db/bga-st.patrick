@@ -32,3 +32,22 @@ export function labelTrickCard(game: Game, card: Card, playerId: number): void {
 export function clearTrickLabels(): void {
     document.querySelectorAll('.stp-trick-by').forEach(el => el.remove());
 }
+
+/**
+ * Заголовок авторозыгрышка [H17]: над игровой зоной показываем, что все
+ * оставшиеся взятки забирает этот игрок. Висит весь поток cardPlayed/
+ * trickWon, убирается по notif_huntScored (п. 64 HANDOFF).
+ */
+export function showAutoPlayBanner(game: Game, playerId: number): void {
+    removeAutoPlayBanner();
+    const player = game.gamedatas.players[playerId];
+    const box = document.getElementById('stp-center');
+    if (!player || !box) return;
+    const name = `<b style="color:#${player.color}">${player.name}</b>`;
+    const text = _('All the remaining tricks go to ${name}').replace('${name}', name);
+    box.insertAdjacentHTML('afterbegin', `<div id="stp-autoplay-info" class="stp-autoplay-info">${text}</div>`);
+}
+
+export function removeAutoPlayBanner(): void {
+    document.getElementById('stp-autoplay-info')?.remove();
+}

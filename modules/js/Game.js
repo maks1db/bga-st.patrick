@@ -347,6 +347,24 @@ function labelTrickCard(game, card, playerId) {
 function clearTrickLabels() {
     document.querySelectorAll('.stp-trick-by').forEach(el => el.remove());
 }
+/**
+ * Заголовок авторозыгрышка [H17]: над игровой зоной показываем, что все
+ * оставшиеся взятки забирает этот игрок. Висит весь поток cardPlayed/
+ * trickWon, убирается по notif_huntScored (п. 64 HANDOFF).
+ */
+function showAutoPlayBanner(game, playerId) {
+    removeAutoPlayBanner();
+    const player = game.gamedatas.players[playerId];
+    const box = document.getElementById('stp-center');
+    if (!player || !box)
+        return;
+    const name = `<b style="color:#${player.color}">${player.name}</b>`;
+    const text = _('All the remaining tricks go to ${name}').replace('${name}', name);
+    box.insertAdjacentHTML('afterbegin', `<div id="stp-autoplay-info" class="stp-autoplay-info">${text}</div>`);
+}
+function removeAutoPlayBanner() {
+    document.getElementById('stp-autoplay-info')?.remove();
+}
 
 /**
  * Виджет: открытые змеиные карты в зонах игроков (ряды по 6, сортировка,
@@ -1285,14 +1303,19 @@ class Game {
     async notif_huntEnded(args) {
         // Досрочный конец охоты [H16]: сервер сбросил оставшиеся карты —
         // убираем свою руку (чужие руки на столе не отображаются).
+        removeAutoPlayBanner();
         if (this.myHand.length > 0) {
             const remaining = [...this.myHand];
             this.myHand = [];
             await this.handStock.removeCards(remaining);
         }
     }
-    notif_roundAutoplay(args) { }
+    notif_roundAutoplay(args) {
+        // Авторозыгрышка [H17]: заголовок, что все взятки забирает этот игрок.
+        showAutoPlayBanner(this, parseInt(args.player_id, 10));
+    }
     notif_huntScored(args) {
+        removeAutoPlayBanner(); // авторозыгрышка завершена — заголовок больше не нужен
         this.adjustAllHp(args.losses);
         showRoundSummary(this, args.relics, args.losses);
     }
