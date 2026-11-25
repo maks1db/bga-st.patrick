@@ -697,6 +697,23 @@ Matagot 2023, BGG 347146). Техническое имя игры: `stpatrick`. 
 
 ## Что сделано 22.11
 
+66. **Мини-карта в журнале + сообщение о конце разбора** (`295c912`, задеплоено):
+    - `Game::cardLogImg(Card)` — HTML `<div class="stp-log-card">` со
+      спрайтом лица, позиции в % (сетка 9×4; маппинг рядов как у
+      SUIT_SPRITE_ROW: clover→0, harp→1, snake→2, cross→3). Аргумент
+      `card_img` добавлен во ВСЕ cardPlayed (HuntPlay + обе автовзятки
+      ResolveTrick); сообщение: '${player_name} plays ${card_img}
+      ${card_name}' (текст названия сохранён). Стиль `.stp-log-card` в
+      `entities/_card.scss` (28×39, background-size 900% 400% — приём
+      процентных позиций как у .stp-elt). HTML в аргументах лога —
+      платформенный стандарт BGA.
+    - `NextDrafter` (нормальный конец разбора [H2-А]): уведомление
+      `draftEnded` «The relic draft is over — the hunt begins» (до этого
+      охота начиналась молча; проклятие [H2-Б] и так логируется).
+      Клиент — заглушка `notif_draftEnded`.
+    - ⚠ Перевод: после рескана каталога на сервере добить RU для двух
+      строк: новый шаблон plays и 'The relic draft is over…'.
+
 65. **Спрайт иконок уменьшен в 4 раза** (`7e06a97`, задеплоено): новый
     `img/elements-48.png` (192×48, ячейки 48×48, 18 КБ вместо 768×192/
     202 КБ; ресемплинг Lanczos через PIL). CSS (`shared/_elements.scss`)
