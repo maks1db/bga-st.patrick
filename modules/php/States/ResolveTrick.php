@@ -94,7 +94,7 @@ class ResolveTrick extends GameState
             $this->game->cards->moveItem($card, ['trick', $pid]);
             $plays[] = ['playerId' => $pid, 'cardId' => $card->id];
             $this->bga->globals->set('trick_plays', $plays);
-            $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_img} ${card_name}'), [
+            $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_name} ${card_img}'), [
                 'player_id' => $pid,
                 'player_name' => $this->game->getPlayerNameById($pid),
                 'card_name' => Game::cardLogName($card),
@@ -188,7 +188,7 @@ class ResolveTrick extends GameState
                 if ($leadSuit === null) {
                     $leadSuit = $card->suit;
                 }
-                $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_img} ${card_name}'), [
+                $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_name} ${card_img}'), [
                     'player_id' => $pid,
                     'player_name' => $this->game->getPlayerNameById($pid),
                     'card_name' => Game::cardLogName($card),

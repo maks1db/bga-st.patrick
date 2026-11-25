@@ -49,7 +49,7 @@ class HuntPlay extends GameState
         $plays[] = ['playerId' => $activePlayerId, 'cardId' => $cardId];
         $this->bga->globals->set('trick_plays', $plays);
 
-        $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_img} ${card_name}'), [
+        $this->notify->all('cardPlayed', clienttranslate('${player_name} plays ${card_name} ${card_img}'), [
             'player_id' => $activePlayerId,
             'player_name' => $this->game->getPlayerNameById($activePlayerId),
             'card_name' => Game::cardLogName($card),

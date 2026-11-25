@@ -32,16 +32,17 @@
 }
 
 /* Мини-карта для журнала (аргумент card_img в cardPlayed): то же лицо
-   спрайта через процентные позиции (сетка 9×4), как у .stp-elt. */
+   спрайта через процентные позиции (сетка 9×4), как у .stp-elt. Блочный
+   элемент стоит под строкой текста записи. */
 .stp-log-card {
-    display: inline-block;
-    width: 28px;
-    height: 39px;
+    display: block;
+    width: 45px;
+    height: 62px;
+    margin-top: 4px;
     background-image: url('img/main-sprite.png');
     background-size: 900% 400%;
-    vertical-align: middle;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px #00000066;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px #00000066;
 }
 
 .stp-card-back {
