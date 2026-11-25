@@ -107,10 +107,10 @@ class Game extends \Bga\GameFramework\Table
         ][$suit]);
     }
 
-    /** Описание карты для журнала: «Snake 7», «Clover 1 (St Patrick)». */
+    /** Описание карты для журнала: «Snake7», «Clover7 (St Patrick)». */
     public static function cardLogName(Card $card): string
     {
-        $name = self::suitName($card->suit) . ' ' . $card->value;
+        $name = self::suitName($card->suit) . $card->value;
         if (self::isPatrick($card)) {
             $name .= ' (' . clienttranslate('St Patrick') . ')';
         }

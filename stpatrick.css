@@ -859,12 +859,12 @@ body.stp-draft-open #stp-hand {
    элемент стоит под строкой текста записи. */
 .stp-log-card {
   display: block;
-  width: 45px;
-  height: 62px;
+  width: 54px;
+  height: 75px;
   margin-top: 4px;
   background-image: url("img/main-sprite.png");
   background-size: 900% 400%;
-  border-radius: 5px;
+  border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
