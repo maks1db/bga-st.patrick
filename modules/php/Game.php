@@ -117,6 +117,20 @@ class Game extends \Bga\GameFramework\Table
         return $name;
     }
 
+    /**
+     * Мини-изображение карты для журнала: div со спрайтом, позиции в %
+     * (сетка 9×4 — см. SUIT_SPRITE_ROW на клиенте; тот же приём, что у
+     * .stp-elt: background-size 900% 400%). HTML подставляется в шаблон
+     * сообщения как аргумент.
+     */
+    public static function cardLogImg(Card $card): string
+    {
+        $row = [self::SUIT_CLOVER => 0, self::SUIT_HARP => 1, self::SUIT_SNAKE => 2, self::SUIT_CROSS => 3][$card->suit];
+        $x = round(($card->value - 1) / 8 * 100, 4);
+        $y = round($row / 3 * 100, 4);
+        return "<div class=\"stp-log-card\" style=\"background-position: {$x}% {$y}%\"></div>";
+    }
+
     public function findPatrickHolder(): int
     {
         $patrick = $this->cards->getItemsByFieldNames(['suit' => self::SUIT_CLOVER, 'value' => 7])->first();

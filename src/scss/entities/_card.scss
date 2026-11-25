@@ -31,6 +31,19 @@
     background-position: calc(var(--bp-x, 0px) * -1) calc(var(--bp-y, 0px) * -1);
 }
 
+/* Мини-карта для журнала (аргумент card_img в cardPlayed): то же лицо
+   спрайта через процентные позиции (сетка 9×4), как у .stp-elt. */
+.stp-log-card {
+    display: inline-block;
+    width: 28px;
+    height: 39px;
+    background-image: url('img/main-sprite.png');
+    background-size: 900% 400%;
+    vertical-align: middle;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px #00000066;
+}
+
 .stp-card-back {
     width: 100%;
     height: 100%;

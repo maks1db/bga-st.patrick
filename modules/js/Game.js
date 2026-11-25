@@ -1221,6 +1221,7 @@ class Game {
         this.draftOverlay.syncNotif(parseInt(args.center, 10), parseInt(args.player_id, 10), parseInt(args.player_relics, 10));
     }
     notif_relicsPassed(args) { }
+    notif_draftEnded(args) { }
     notif_curse(args) {
         // реликвии после проклятия: 0 (ушли в центр) или у игроков при особой охоте [H5]
         const relics = args.relics ?? {};

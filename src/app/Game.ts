@@ -393,6 +393,8 @@ export class Game {
 
     notif_relicsPassed(args: any): void { /* лог в журнале */ }
 
+    notif_draftEnded(args: any): void { /* лог в журнале: разбор реликвий завершён */ }
+
     notif_curse(args: any): void {
         // реликвии после проклятия: 0 (ушли в центр) или у игроков при особой охоте [H5]
         const relics = args.relics ?? {};

@@ -30,6 +30,9 @@ class NextDrafter extends GameState
         }
         $passed = $this->bga->globals->get('passed_players');
         if (count($passed) >= $this->game->getPlayersNumber() - 1) {
+            // Разбор завершён (все, кроме одного, спасовали [H2-А]) —
+            // явное сообщение в журнале, дальше молча начиналась охота.
+            $this->notify->all('draftEnded', clienttranslate('The relic draft is over — the hunt begins'), []);
             $this->bga->globals->set('trick_plays', []);
             $this->gamestate->changeActivePlayer($this->game->findPatrickHolder());
             return HuntPlay::class;
